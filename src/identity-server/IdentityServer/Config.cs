@@ -1,33 +1,54 @@
-﻿using IdentityServer4.Models;
+﻿using IdentityServer4;
+using IdentityServer4.Models;
 using System.Collections.Generic;
 
 namespace IdentityServer
 {
     public static class Config
     {
-        public static IEnumerable<ApiResource> Apis => new ApiResource[]
+        public static IEnumerable<IdentityResource> Ids =>
+            new IdentityResource[]
+            {
+                new IdentityResources.OpenId(),
+                new IdentityResources.Profile(),
+            };
+
+        public static IEnumerable<ApiResource> Apis => new[]
         {
             new ApiResource("api1", "My API")
         };
 
-        public static IEnumerable<Client> Clients => new Client[]
+        public static IEnumerable<Client> Clients => new[]
         {
+            // JavaScript Client
             new Client
             {
-                ClientId = "client",
+                ClientId = "js",
+                ClientName = "JavaScript Client",
+                AllowedGrantTypes = GrantTypes.Code,
+                RequirePkce = true,
+                RequireClientSecret = false,
 
-                // no interactive user, use the clientid/secret for authentication
-                AllowedGrantTypes = GrantTypes.ClientCredentials,
+                RedirectUris =           { "http://localhost:5003/callback.html" },
+                PostLogoutRedirectUris = { "http://localhost:5003/index.html" },
+                AllowedCorsOrigins =     { "http://localhost:5003" },
 
-                // secret for authentication
-                ClientSecrets =
+                AllowedScopes =
                 {
-                    new Secret("secret".Sha256())
-                },
-
-                // scopes that client has access to
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    "api1"
+                }
+            },
+            new Client
+            {
+                ClientId = "account-service-swagger",
+                ClientName = "Swagger UI for Account service",
+                AllowedGrantTypes = GrantTypes.Implicit,
+                AllowAccessTokensViaBrowser = true,
+                RedirectUris = {"https://localhost:5001/swagger/oauth2-redirect.html"},
                 AllowedScopes = { "api1" }
-            }
+            },
         };
     }
 }

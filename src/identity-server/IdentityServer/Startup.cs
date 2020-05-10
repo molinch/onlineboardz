@@ -12,17 +12,19 @@ namespace IdentityServer
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            CurrentEnvironment = env;
         }
 
         public IConfiguration Configuration { get; }
+        private IWebHostEnvironment CurrentEnvironment { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllersWithViews();
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
@@ -30,13 +32,26 @@ namespace IdentityServer
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
             services.AddMvc();//.SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            services.AddIdentityServer()
+            var identityServerBuilder = services.AddIdentityServer()
                 .AddInMemoryCaching()
+                .AddInMemoryIdentityResources(Config.Ids)
                 .AddInMemoryApiResources(Config.Apis)
                 .AddInMemoryClients(Config.Clients)
-
                 .AddClientStore<InMemoryClientStore>()
                 .AddResourceStore<InMemoryResourcesStore>();
+
+
+            if (CurrentEnvironment.IsDevelopment())
+            {
+                identityServerBuilder.AddDeveloperSigningCredential();
+            }
+            else
+            {
+                throw new System.Exception("missing signing certificate");
+                // see: https://damienbod.com/2020/02/10/create-certificates-for-identityserver4-signing-using-net-core/
+                // see: https://tatvog.wordpress.com/2018/06/05/identityserver4-addsigningcredential-using-certificate-stored-in-azure-key-vault/
+            }
+
             services
                 .AddAuthentication()
                 .AddGoogle("Google", options =>
@@ -66,6 +81,7 @@ namespace IdentityServer
 
             app.UseRouting();
 
+            app.UseIdentityServer();
             app.UseAuthorization();
             app.UseStaticFiles();
 
@@ -73,8 +89,6 @@ namespace IdentityServer
             {
                 endpoints.MapDefaultControllerRoute();
             });
-
-            app.UseIdentityServer();
         }
     }
 }
