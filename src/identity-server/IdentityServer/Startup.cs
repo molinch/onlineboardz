@@ -1,12 +1,13 @@
 using IdentityServer4;
+using IdentityServer4.Models;
 using IdentityServer4.Stores;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
 
 namespace IdentityServer
 {
@@ -34,12 +35,14 @@ namespace IdentityServer
             services.AddMvc();//.SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             var identityServerBuilder = services.AddIdentityServer()
                 .AddInMemoryCaching()
-                .AddInMemoryIdentityResources(Config.Ids)
-                .AddInMemoryApiResources(Config.Apis)
-                .AddInMemoryClients(Config.Clients)
+                .AddInMemoryIdentityResources(new IdentityResource[]{
+                    new IdentityResources.OpenId(),
+                    new IdentityResources.Profile(),
+                })
+                .AddInMemoryApiResources(Configuration.GetSection("IdentityServer:ApiResources"))
+                .AddInMemoryClients(Configuration.GetSection("IdentityServer:Clients"))
                 .AddClientStore<InMemoryClientStore>()
                 .AddResourceStore<InMemoryResourcesStore>();
-
 
             if (CurrentEnvironment.IsDevelopment())
             {

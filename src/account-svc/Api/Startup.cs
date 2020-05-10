@@ -19,6 +19,7 @@ namespace Api
         }
 
         public IConfiguration Configuration { get; }
+        private string IdentityServerUri => Configuration.GetValue<string>("IdentityServerUri");
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -27,10 +28,9 @@ namespace Api
             services.AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>
             {
-                options.Authority = "https://localhost:5000";
+                options.Authority = IdentityServerUri;
                 options.RequireHttpsMetadata = false;
-
-                options.Audience = "api1";
+                options.Audience = "account-api";
             });
 
             services.AddCors(options =>
@@ -38,7 +38,11 @@ namespace Api
                 // this defines a CORS policy called "default"
                 options.AddPolicy("default", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5003")
+                    var allowedCorsOrigins = Configuration.GetSection("AllowedCorsOrigins").AsEnumerable()
+                        .Select(p => p.Value)
+                        .Where(v => v != null)
+                        .ToArray();
+                    policy.WithOrigins(allowedCorsOrigins)
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
@@ -60,10 +64,10 @@ namespace Api
                             {
                                 { "openid", "OpenId" },
                                 { "profile", "Profile" },
-                                { "api1", "Access api1" }
+                                { "account-api", "Access account api" }
                             },
-                            AuthorizationUrl = "https://localhost:5000/connect/authorize",
-                            TokenUrl = "https://localhost:5000/connect/token"
+                            AuthorizationUrl = $"{IdentityServerUri}connect/authorize",
+                            TokenUrl = $"{IdentityServerUri}connect/token"
                         }
                     }
                 });
