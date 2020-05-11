@@ -1,4 +1,5 @@
 using IdentityModel;
+using IdentityServer;
 using IdentityServer4.Events;
 using IdentityServer4.Services;
 using IdentityServer4.Stores;
@@ -114,6 +115,7 @@ namespace IdentityServer4.Quickstart.UI
             // for the specific protocols used and store them in the local auth cookie.
             // this is typically used to store data needed for signout from those protocols.
             var additionalLocalClaims = new List<Claim>();
+            additionalLocalClaims.AddRange(claims.Where(ExtraClaims.IsExtra));
             var localSignInProps = new AuthenticationProperties();
             ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
             //ProcessLoginCallbackForWsFed(result, additionalLocalClaims, localSignInProps);

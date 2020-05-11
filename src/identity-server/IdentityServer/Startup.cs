@@ -1,13 +1,17 @@
 using IdentityServer4;
 using IdentityServer4.Models;
 using IdentityServer4.Stores;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Collections.Generic;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace IdentityServer
 {
@@ -42,7 +46,8 @@ namespace IdentityServer
                 .AddInMemoryApiResources(Configuration.GetSection("IdentityServer:ApiResources"))
                 .AddInMemoryClients(Configuration.GetSection("IdentityServer:Clients"))
                 .AddClientStore<InMemoryClientStore>()
-                .AddResourceStore<InMemoryResourcesStore>();
+                .AddResourceStore<InMemoryResourcesStore>()
+                .AddProfileService<ProfileService>();
 
             if (CurrentEnvironment.IsDevelopment())
             {
@@ -60,10 +65,15 @@ namespace IdentityServer
                 .AddGoogle("Google", options =>
                 {
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
-
+                    options.Scope.Add("profile");
+   
                     var googleAuthNSection = Configuration.GetSection("Authentication:Google");
                     options.ClientId = googleAuthNSection["ClientId"];
                     options.ClientSecret = googleAuthNSection["ClientSecret"];
+
+                    options.ClaimActions.MapJsonKey("picture", "picture", "url");
+                    options.ClaimActions.MapJsonKey("locale", "locale", "string");
+                    options.SaveTokens = true;
                 });
         }
 
