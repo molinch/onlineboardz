@@ -14,3 +14,7 @@ See: https://docs.microsoft.com/fr-fr/aspnet/core/security/authentication/social
 IdentityServer4 provides an integration with EFCore, as long as there is a supported provider for EFCore the database can be used. 
 Hence for simplicity MongoDB isn't used here, we may revise this later.
 Currently PostgreSQL is used.
+The connection string should also be placed in dotnet secrets:
+```
+dotnet user-secrets set "PostgreSQLConnectionString" "Host=localhost; user id=identityserver-db-user; password=password; database=identityserver"
+```
