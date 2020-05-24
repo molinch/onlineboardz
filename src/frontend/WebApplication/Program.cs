@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace JavaScriptClient
+namespace WebApplication
 {
-    public class Program
+    public class WebApplication
     {
         public static void Main(string[] args)
         {

@@ -1,17 +1,17 @@
 using IdentityServer4;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Mappers;
 using IdentityServer4.Models;
-using IdentityServer4.Stores;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace IdentityServer
 {
@@ -23,10 +23,10 @@ namespace IdentityServer
             CurrentEnvironment = env;
         }
 
-        public IConfiguration Configuration { get; }
-        private IWebHostEnvironment CurrentEnvironment { get; set; }
+        private IConfiguration Configuration { get; }
+        private IWebHostEnvironment CurrentEnvironment { get; }
+        private string ConnectionString => Configuration.GetValue<string>("PostgreSQLConnectionString");
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
@@ -38,16 +38,25 @@ namespace IdentityServer
             });
             services.AddMvc();//.SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             var identityServerBuilder = services.AddIdentityServer()
-                .AddInMemoryCaching()
-                .AddInMemoryIdentityResources(new IdentityResource[]{
-                    new IdentityResources.OpenId(),
-                    new IdentityResources.Profile(),
+                .AddProfileService<ProfileService>()
+                // this adds the config data from DB (clients, resources)
+                .AddConfigurationStore(options =>
+                {
+                    options.ConfigureDbContext = builder =>
+                        builder.UseNpgsql(ConnectionString,
+                            sql => sql.MigrationsAssembly(typeof(Startup).Assembly.FullName));
                 })
-                .AddInMemoryApiResources(Configuration.GetSection("IdentityServer:ApiResources"))
-                .AddInMemoryClients(Configuration.GetSection("IdentityServer:Clients"))
-                .AddClientStore<InMemoryClientStore>()
-                .AddResourceStore<InMemoryResourcesStore>()
-                .AddProfileService<ProfileService>();
+                // this adds the operational data from DB (codes, tokens, consents)
+                .AddOperationalStore(options =>
+                {
+                    options.ConfigureDbContext = builder =>
+                        builder.UseNpgsql(ConnectionString,
+                            sql => sql.MigrationsAssembly(typeof(Startup).Assembly.FullName));
+
+                    // this enables automatic token cleanup. this is optional.
+                    options.EnableTokenCleanup = true;
+                    options.TokenCleanupInterval = 30;
+                });
 
             if (CurrentEnvironment.IsDevelopment())
             {
@@ -77,11 +86,11 @@ namespace IdentityServer
                 });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
+                InitializeDatabase(app);
                 app.UseDeveloperExceptionPage();
             }
             else
@@ -102,6 +111,50 @@ namespace IdentityServer
             {
                 endpoints.MapDefaultControllerRoute();
             });
+        }
+
+        private void InitializeDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            {
+                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
+
+                var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
+                context.Database.Migrate();
+                if (!context.Clients.Any())
+                {
+                    var clients = new List<Client>();
+                    Configuration.GetSection("IdentityServer:Clients").Bind(clients);
+                    foreach (var client in clients)
+                    {
+                        context.Clients.Add(client.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+
+                if (!context.IdentityResources.Any())
+                {
+                    foreach (var resource in new IdentityResource[]{
+                        new IdentityResources.OpenId(),
+                        new IdentityResources.Profile(),
+                    })
+                    {
+                        context.IdentityResources.Add(resource.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+
+                if (!context.ApiResources.Any())
+                {
+                    var resources = new List<ApiResource>();
+                    Configuration.GetSection("IdentityServer:ApiResources").Bind(resources);
+                    foreach (var resource in resources)
+                    {
+                        context.ApiResources.Add(resource.ToEntity());
+                    }
+                    context.SaveChanges();
+                }
+            }
         }
     }
 }

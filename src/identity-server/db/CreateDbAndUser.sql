@@ -1,0 +1,17 @@
+CREATE DATABASE identityserver
+    WITH 
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    CONNECTION LIMIT = -1;
+
+CREATE ROLE "identityserver-db-user" WITH
+	LOGIN
+	NOSUPERUSER
+	NOCREATEDB
+	NOCREATEROLE
+	INHERIT
+	NOREPLICATION
+	CONNECTION LIMIT -1
+	PASSWORD 'password';
+
+GRANT ALL PRIVILEGES ON DATABASE identityserver TO "identityserver-db-user";
