@@ -1,5 +1,4 @@
 Set-StrictMode -Version Latest
-#$ErrorActionPreference = "Stop"
 
 $HostDataPath="c:/identityserver-pgsql-data/" # where the data is stored on the host, this way if the container is dropped data is kept
 $AdministratorPassword="C0mPliC4tedP4ssw0rd"

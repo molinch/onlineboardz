@@ -1,7 +1,9 @@
+using BoardIdentityServer.Persistence;
 using IdentityServer4;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
 using IdentityServer4.Models;
+using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,7 +15,7 @@ using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace IdentityServer
+namespace BoardIdentityServer
 {
     public class Startup
     {
@@ -27,18 +29,41 @@ namespace IdentityServer
         private IWebHostEnvironment CurrentEnvironment { get; }
         private string ConnectionString => Configuration.GetValue<string>("PostgreSQLConnectionString");
 
+        private string[] AllowedCorsOrigins => Configuration.GetSection("AllowedCorsOrigins").AsEnumerable()
+                        .Select(p => p.Value)
+                        .Where(v => v != null)
+                        .ToArray();
+
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.WithOrigins(AllowedCorsOrigins)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
+
+            services.AddMvcCore()
+                .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Latest);
+
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-            services.AddMvc();//.SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            var identityServerBuilder = services.AddIdentityServer()
-                .AddProfileService<ProfileService>()
+            
+            var identityServerBuilder = services
+                .AddIdentityServer(options =>
+                {
+                    options.UserInteraction.LoginUrl = Configuration.GetValue<string>("UI:Login");
+                    options.UserInteraction.LogoutUrl = Configuration.GetValue<string>("UI:Logout");
+                    options.UserInteraction.ErrorUrl = Configuration.GetValue<string>("UI:Error");
+                })
                 // this adds the config data from DB (clients, resources)
                 .AddConfigurationStore(options =>
                 {
@@ -84,6 +109,11 @@ namespace IdentityServer
                     options.ClaimActions.MapJsonKey("locale", "locale", "string");
                     options.SaveTokens = true;
                 });
+
+            services.AddControllers();
+            services.AddTransient<IReturnUrlParser, ReturnUrlParser>();
+
+            services.AddDbContext<UserDbContext>(options => options.UseNpgsql(ConnectionString));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -99,28 +129,30 @@ namespace IdentityServer
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseIdentityServer();
-            app.UseAuthorization();
-            app.UseStaticFiles();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapDefaultControllerRoute();
-            });
+            app
+                .UseHttpsRedirection()
+                .UseCors()
+                .UseRouting()
+                .UseEndpoints(endpoints =>
+                {
+                    endpoints.MapControllers();
+                })
+                .UseIdentityServer();
         }
 
         private void InitializeDatabase(IApplicationBuilder app)
         {
             using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
             {
+                // Our models
+                serviceScope.ServiceProvider.GetRequiredService<UserDbContext>().Database.Migrate();
+
+                // For IdentityServer4
                 serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
 
                 var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
                 context.Database.Migrate();
+
                 if (!context.Clients.Any())
                 {
                     var clients = new List<Client>();

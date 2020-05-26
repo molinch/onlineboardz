@@ -35,8 +35,7 @@ namespace Api
 
             services.AddCors(options =>
             {
-                // this defines a CORS policy called "default"
-                options.AddPolicy("default", policy =>
+                options.AddDefaultPolicy(policy =>
                 {
                     var allowedCorsOrigins = Configuration.GetSection("AllowedCorsOrigins").AsEnumerable()
                         .Select(p => p.Value)
