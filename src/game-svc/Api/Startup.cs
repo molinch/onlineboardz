@@ -1,3 +1,4 @@
+using Api.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -30,7 +31,7 @@ namespace Api
             {
                 options.Authority = IdentityServerUri;
                 options.RequireHttpsMetadata = false;
-                options.Audience = "account-api";
+                options.Audience = "game-api";
             });
 
             services.AddCors(options =>
@@ -63,7 +64,7 @@ namespace Api
                             {
                                 { "openid", "OpenId" },
                                 { "profile", "Profile" },
-                                { "account-api", "Access account api" }
+                                { "game-api", "Access game api" }
                             },
                             AuthorizationUrl = $"{IdentityServerUri}connect/authorize",
                             TokenUrl = $"{IdentityServerUri}connect/token"
@@ -72,7 +73,10 @@ namespace Api
                 });
 
                 document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("bearer"));
-            });            
+            });
+
+            services.AddSingleton<DatabaseSettings>();
+            services.AddSingleton<IWaitingRoomRepository, WaitingRoomRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -106,8 +110,8 @@ namespace Api
             {
                 settings.OAuth2Client = new OAuth2ClientSettings
                 {
-                    ClientId = "account-service-swagger",
-                    AppName = "Swagger UI for Account service",
+                    ClientId = "game-service-swagger",
+                    AppName = "Swagger UI for Game service",
                 };
             });
         }

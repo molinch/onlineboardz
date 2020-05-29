@@ -9,5 +9,12 @@ namespace BoardIdentityServer.Persistence
         }
 
         public DbSet<User>? Users { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+        }
     }
 }

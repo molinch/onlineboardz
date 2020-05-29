@@ -5,6 +5,16 @@ VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api", "Api\Api.csproj", "{A51CEA69-AB5B-45F4-A8AA-0F926E7F31EE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B3E14BC5-78FD-4A73-8277-6305C5B686BE}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "db", "db", "{230477EE-F8AB-43DA-95CE-200BAADD209F}"
+	ProjectSection(SolutionItems) = preProject
+		db\start-mongodb.ps1 = db\start-mongodb.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,13 +25,12 @@ Global
 		{A51CEA69-AB5B-45F4-A8AA-0F926E7F31EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A51CEA69-AB5B-45F4-A8AA-0F926E7F31EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A51CEA69-AB5B-45F4-A8AA-0F926E7F31EE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4C1FB80F-2097-481C-99A9-B27307FC6C02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4C1FB80F-2097-481C-99A9-B27307FC6C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4C1FB80F-2097-481C-99A9-B27307FC6C02}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4C1FB80F-2097-481C-99A9-B27307FC6C02}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{230477EE-F8AB-43DA-95CE-200BAADD209F} = {B3E14BC5-78FD-4A73-8277-6305C5B686BE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F0917353-DA22-475D-B5EB-A7036EA8E2A8}

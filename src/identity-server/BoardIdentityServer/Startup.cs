@@ -180,6 +180,8 @@ namespace BoardIdentityServer
                     context.SaveChanges();
                 }
 
+                context.IdentityResources.RemoveRange(context.IdentityResources.ToList());
+                context.SaveChanges();
                 if (!context.IdentityResources.Any())
                 {
                     foreach (var resource in new IdentityResource[]{
@@ -192,6 +194,8 @@ namespace BoardIdentityServer
                     context.SaveChanges();
                 }
 
+                context.ApiResources.RemoveRange(context.ApiResources.ToList());
+                context.SaveChanges();
                 if (!context.ApiResources.Any())
                 {
                     var resources = new List<ApiResource>();

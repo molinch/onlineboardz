@@ -57,7 +57,7 @@ namespace BoardIdentityServer
             }
 
             _logger.LogTrace("No AuthorizationRequest being returned");
-            return null;
+            return null!; // excepted by the code that if not parsed there is null returned
         }
 
         public bool IsValidReturnUrl(string returnUrl)
