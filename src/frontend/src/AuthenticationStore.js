@@ -14,7 +14,7 @@ class AuthenticationStore {
             redirect_uri: 'http://localhost:3000/login-callback',
             post_logout_redirect_uri: 'http://localhost:3000',
             response_type: 'code',
-            scope: 'openid profile account-api',
+            scope: 'openid profile game-api',
             revokeAccessTokenOnSignout: true,
             userStore: this.userStore
         };

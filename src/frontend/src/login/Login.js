@@ -14,14 +14,19 @@ class Login extends React.Component {
         if (stateId) {
             try {
                 const stateData = await this.props.authenticationStore.getStateData(stateId);
-                const provider = JSON.parse(stateData).data.provider;
-                document.location.href = `https://localhost:5000/api/authenticate/${provider}?returnUrl=${encodeURIComponent(returnUrl)}`;
+                if (stateData)
+                {
+                    const provider = JSON.parse(stateData).data.provider;
+                    document.location.href = `https://localhost:5000/api/authenticate/${provider}?returnUrl=${encodeURIComponent(returnUrl)}`;
+                    return;
+                }
             } catch (error) {
                 this.props.onError(error);
+                return;
             }
-        } else {
-            navigate("/");
         }
+
+        navigate("/");
     }
 
     render() {

@@ -11,6 +11,8 @@ import AuthenticationStore from './AuthenticationStore';
 import './App.css';
 import logo from './logo.svg';
 import TicTacToe from './games/TicTacToe/TicTacToe';
+import { Layout, Menu, Breadcrumb } from 'antd';
+const { Header, Content, Footer } = Layout;
 
 class App extends React.Component {
   constructor() {
@@ -56,40 +58,52 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <h1><img src={logo} className="App-logo" alt="Logo" />Online boardz</h1>
-        <nav>
-          <Link to="/">Home</Link>{" "}
-          <Link to="/about">About</Link>
-          <Link to="/games/tictactoe">TicTacToe</Link>
-        </nav>
+        <Layout>
+          <Header style={{ position: 'fixed', zIndex: 1, width: '100%' }}>
+            <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
+              <Menu.Item key="1"><Link to="/">Home</Link></Menu.Item>
+              <Menu.Item key="2"><Link to="/about">About</Link></Menu.Item>
+              <Menu.Item key="3"><Link to="/games/tictactoe">TicTacToe</Link></Menu.Item>
+            </Menu>
+          </Header>
+          <Content className="site-layout" style={{ padding: '0 50px', marginTop: 64 }}>
         
-        <Router>
-          <Home path="/" />
-          <About path="/about" />
-          <TicTacToe path="/games/tictactoe" />
+            <h1><img src={logo} className="App-logo" alt="Logo" />Online boardz</h1>
+            
+            <Router>
+              <Home path="/" />
+              <About path="/about" />
+              <TicTacToe path="/games/tictactoe" />
 
-          <Login
-            path="/login"
-            authenticationStore={this.authenticationStore}
-          />
-          <Logout
-            path="/logout"
-            authenticationStore={this.authenticationStore}
-          />
-          <LoginCallback
-            path="/login-callback"
-            authenticationStore={this.authenticationStore}
-            onLoggedIn={async user => await this.tryGetUser()}
-            onError={error => this.onLoggingError(error)}
-          />
-          <LoginError path="/login-error" />
-        </Router>
+              <Login
+                path="/login"
+                authenticationStore={this.authenticationStore}
+                onError={error => this.onLoggingError(error)}
+              />
+              <Logout
+                path="/logout"
+                authenticationStore={this.authenticationStore}
+                onError={error => this.onLoggingError(error)}
+              />
+              <LoginCallback
+                path="/login-callback"
+                authenticationStore={this.authenticationStore}
+                onLoggedIn={async user => await this.tryGetUser()}
+                onError={error => this.onLoggingError(error)}
+              />
+              <LoginError path="/login-error" />
+            </Router>
 
-        <LoginStatus
-          user={this.state.user}
-          login={provider => this.login(provider)}
-          logout={() => this.logout()}
-        />
+            <LoginStatus
+              user={this.state.user}
+              login={provider => this.login(provider)}
+              logout={() => this.logout()}
+            />
+          </Content>
+          <Footer style={{ textAlign: 'center' }}>
+            Online boardz ©2020 to bunch of dawgz
+          </Footer>
+        </Layout>
       </div>
     );
   }

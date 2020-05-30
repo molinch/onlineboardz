@@ -9,9 +9,9 @@ class LoginStatus extends React.Component {
         if (user) {
             return (
                 <div>
-                    <strong>Logged in! 🎉</strong><br />
+                    <strong>Logged in! <span role="img" aria-label="party">🎉</span></strong><br />
                     <div>Welcome {user.name}</div>
-                    <div><img src={user.pictureUrl} alt="user picture" referrerpolicy="no-referrer" /></div>
+                    <div><img src={user.pictureUrl} alt="user profile" referrerpolicy="no-referrer" /></div>
                     <button onClick={this.props.logout}>Log out!</button>
                 </div>
             );

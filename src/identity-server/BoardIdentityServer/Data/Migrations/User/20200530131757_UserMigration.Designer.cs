@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BoardIdentityServer.Data.Migrations.User
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20200529145434_UserMigration2")]
-    partial class UserMigration2
+    [Migration("20200530131757_UserMigration")]
+    partial class UserMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -35,9 +35,8 @@ namespace BoardIdentityServer.Data.Migrations.User
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ExternalId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ExternalId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -63,9 +62,16 @@ namespace BoardIdentityServer.Data.Migrations.User
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("ExternalId")
                         .IsUnique();
 
                     b.ToTable("Users");

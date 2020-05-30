@@ -15,6 +15,10 @@ namespace BoardIdentityServer.Persistence
             builder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+
+            builder.Entity<User>()
+                .HasIndex(u => u.ExternalId)
+                .IsUnique();
         }
     }
 }

@@ -14,7 +14,8 @@ namespace BoardIdentityServer.Data.Migrations.User
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ExternalId = table.Column<string>(nullable: false),
+                    ExternalId = table.Column<Guid>(nullable: false),
+                    ProviderId = table.Column<string>(nullable: false),
                     Name = table.Column<string>(nullable: false),
                     FirstName = table.Column<string>(nullable: false),
                     LastName = table.Column<string>(nullable: false),
@@ -28,6 +29,18 @@ namespace BoardIdentityServer.Data.Migrations.User
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Email",
+                table: "Users",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_ExternalId",
+                table: "Users",
+                column: "ExternalId",
+                unique: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

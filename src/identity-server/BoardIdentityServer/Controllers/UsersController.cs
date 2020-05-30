@@ -3,6 +3,7 @@ using IdentityServer4.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,8 +26,8 @@ namespace BoardIdentityServer.Controllers
         public Task<User> Me()
         {
             var subjectId = HttpContext.User.GetSubjectId();
-            var userId = int.Parse(subjectId);
-            return _users.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
+            var userId = Guid.Parse(subjectId);
+            return _users.Users.Where(u => u.ExternalId == userId).FirstOrDefaultAsync();
         }
     }
 }

@@ -134,7 +134,8 @@ namespace BoardIdentityServer.Controllers
                 var externalUser = result.Principal;
                 user = new User()
                 {
-                    ExternalId = externalUser.FindFirst(ClaimTypes.NameIdentifier).Value,
+                    ExternalId = Guid.NewGuid(),
+                    ProviderId = externalUser.FindFirst(ClaimTypes.NameIdentifier).Value,
                     Name = externalUser.FindFirst(ClaimTypes.Name).Value,
                     FirstName = externalUser.FindFirst(ClaimTypes.GivenName).Value,
                     LastName = externalUser.FindFirst(ClaimTypes.Surname).Value,
@@ -155,9 +156,10 @@ namespace BoardIdentityServer.Controllers
             var additionalLocalClaims = new List<Claim>();
             var localSignInProps = new AuthenticationProperties();
             ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
-            
+
             // issue authentication cookie for user
-            var identityServerUser = new IdentityServerUser(user.Id.ToString())
+            var userExternalId = user.ExternalId.ToString();
+            var identityServerUser = new IdentityServerUser(userExternalId)
             {
                 DisplayName = user.Name,
                 IdentityProvider = provider,
@@ -171,7 +173,7 @@ namespace BoardIdentityServer.Controllers
 
             // check if external login is in the context of an OIDC request
             var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
-            await _events.RaiseAsync(new UserLoginSuccessEvent(provider, user.ExternalId, user.Name, user.Name, true, context?.ClientId));
+            await _events.RaiseAsync(new UserLoginSuccessEvent(provider, userExternalId, user.Name, user.Name, true, context?.ClientId));
 
             return Redirect(returnUrl);
         }
