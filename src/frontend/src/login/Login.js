@@ -17,7 +17,7 @@ class Login extends React.Component {
                 if (stateData)
                 {
                     const provider = JSON.parse(stateData).data.provider;
-                    document.location.href = `https://localhost:5000/api/authenticate/${provider}?returnUrl=${encodeURIComponent(returnUrl)}`;
+                    document.location.href = `https://localhost:5000/api/authenticate/externalLogin?provider=${provider}&returnUrl=${encodeURIComponent(returnUrl)}`;
                     return;
                 }
             } catch (error) {
@@ -30,7 +30,7 @@ class Login extends React.Component {
     }
 
     render() {
-        return (<div></div>);
+        return (<></>);
     }
 }
 

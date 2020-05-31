@@ -8,6 +8,7 @@ namespace Api.Persistence
         Task<WaitingRoom> CreateAsync(WaitingRoom room);
         Task<IEnumerable<WaitingRoom>> GetAsync();
         Task<WaitingRoom> GetAsync(string id);
+        Task<bool> IsAlreadyInWaitingRoomAsync(string playerId);
         Task RemoveAsync(string id);
         Task RemoveAsync(WaitingRoom room);
         Task UpdateAsync(string id, WaitingRoom room);

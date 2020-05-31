@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Collections.Generic;
 
 namespace Api.Persistence
@@ -10,7 +11,8 @@ namespace Api.Persistence
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
 
-        public string GameId { get; set; } = null!;
+        public GameType GameType { get; set; }
+        public TimeSpan MaxDuration { get; set; }
 
         public int MinPlayers { get; set; }
         public int MaxPlayers { get; set; }
@@ -18,5 +20,12 @@ namespace Api.Persistence
         public bool IsOpen { get; set; }
 
         public List<Player> Players { get; set; } = null!;
+
+        public class Player
+        {
+            public string Id { get; set; } = null!;
+            public string Name { get; set; } = null!;
+            public DateTime AcceptedAt { get; set; }
+        }
     }
 }

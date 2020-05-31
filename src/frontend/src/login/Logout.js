@@ -12,7 +12,7 @@ class Logout extends React.Component {
     }
 
     render() {
-        return (<div></div>);
+        return (<></>);
     }
 }
 

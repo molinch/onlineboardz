@@ -11,8 +11,6 @@ class LoginStatus extends React.Component {
                 <div>
                     <strong>Logged in! <span role="img" aria-label="party">🎉</span></strong><br />
                     <div>Welcome {user.name}</div>
-                    <div><img src={user.pictureUrl} alt="user profile" referrerpolicy="no-referrer" /></div>
-                    <button onClick={this.props.logout}>Log out!</button>
                 </div>
             );
         }

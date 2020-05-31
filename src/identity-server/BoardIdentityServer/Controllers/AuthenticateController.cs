@@ -45,8 +45,8 @@ namespace BoardIdentityServer.Controllers
         }
 
         [HttpGet]
-        [Route("Google")]
-        public IActionResult Google([Required]string returnUrl)
+        [Route("ExternalLogin")]
+        public IActionResult ExternalLogin([Required] string provider, [Required]string returnUrl)
         {
             // validate returnUrl - either it is a valid OIDC URL or back to a local page
             if (Url.IsLocalUrl(returnUrl) == false && _interaction.IsValidReturnUrl(returnUrl) == false)
@@ -61,35 +61,11 @@ namespace BoardIdentityServer.Controllers
                 RedirectUri = Url.Action(nameof(HandleCallback)).ToLower(),
                 Items = {
                     { "returnUrl", returnUrl },
-                    { "scheme", "Google" }
+                    { "scheme", provider }
                 }
             };
 
-            return Challenge(props, "Google");
-        }
-
-        [HttpGet]
-        [Route("Facebook")]
-        public IActionResult Facebook([Required] string returnUrl)
-        {
-            // validate returnUrl - either it is a valid OIDC URL or back to a local page
-            if (Url.IsLocalUrl(returnUrl) == false && _interaction.IsValidReturnUrl(returnUrl) == false)
-            {
-                // user might have clicked on a malicious link - should be logged
-                return BadRequest("Invalid ReturnUrl");
-            }
-
-            // start challenge and roundtrip the return URL and scheme 
-            var props = new AuthenticationProperties
-            {
-                RedirectUri = Url.Action(nameof(HandleCallback)).ToLower(),
-                Items = {
-                    { "returnUrl", returnUrl },
-                    { "scheme", "Facebook" }
-                }
-            };
-
-            return Challenge(props, "Facebook");
+            return Challenge(props, provider);
         }
 
         [HttpGet]
@@ -97,7 +73,7 @@ namespace BoardIdentityServer.Controllers
         public async Task<IActionResult> HandleCallback()
         {
             // read external identity from the temporary cookie
-            var result = await HttpContext.AuthenticateAsync(IdentityServer4.IdentityServerConstants.ExternalCookieAuthenticationScheme);
+            var result = await HttpContext.AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
             if (result == null)
             {
                 // should probably do something with the error, redirect back to SPA
@@ -126,12 +102,12 @@ namespace BoardIdentityServer.Controllers
 
             // lookup our user and external provider info
             var (user, provider, claims) = FindUserFromExternalProvider(result);
+            var externalUser = result.Principal;
             if (user == null)
             {
                 // this might be where you might initiate a custom workflow for user registration
                 // in this sample we don't show how that would be done, as our sample implementation
                 // simply auto-provisions new external user
-                var externalUser = result.Principal;
                 user = new User()
                 {
                     ExternalId = Guid.NewGuid(),
@@ -153,7 +129,10 @@ namespace BoardIdentityServer.Controllers
             // this allows us to collect any additional claims or properties
             // for the specific protocols used and store them in the local auth cookie.
             // this is typically used to store data needed for signout from those protocols.
-            var additionalLocalClaims = new List<Claim>();
+            var additionalLocalClaims = new List<Claim>()
+            {
+                externalUser.FindFirst(ClaimTypes.Name)
+            };
             var localSignInProps = new AuthenticationProperties();
             ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
 

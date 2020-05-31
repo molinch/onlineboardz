@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Api.Persistence
@@ -25,6 +26,12 @@ namespace Api.Persistence
         {
             var find = await _waitingRooms.FindAsync(r => r.Id == id);
             return await find.FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> IsAlreadyInWaitingRoomAsync(string playerId)
+        {
+            var find = await _waitingRooms.FindAsync(r => r.Players.Any(p => p.Id == playerId));
+            return await find.AnyAsync();
         }
 
         public async Task<WaitingRoom> CreateAsync(WaitingRoom room)

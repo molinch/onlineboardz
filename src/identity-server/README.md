@@ -6,6 +6,9 @@ Instead use dotnet user secrets:
 ```
 dotnet user-secrets set "Authentication:Google:ClientId" "<client-id>"
 dotnet user-secrets set "Authentication:Google:ClientSecret" "<client-secret>"
+
+dotnet user-secrets set "Authentication:Facebook:ClientId" "<client-id>"
+dotnet user-secrets set "Authentication:Facebook:ClientSecret" "<client-secret>"
 ```
 It will put them outside of project folder so that they will never accidentally be committed.
 See: https://docs.microsoft.com/fr-fr/aspnet/core/security/authentication/social/google-logins?view=aspnetcore-3.1

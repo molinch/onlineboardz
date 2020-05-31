@@ -1,4 +1,6 @@
+using Api.Extensions;
 using Api.Persistence;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -77,6 +79,11 @@ namespace Api
 
             services.AddSingleton<DatabaseSettings>();
             services.AddSingleton<IWaitingRoomRepository, WaitingRoomRepository>();
+
+            services.AddHttpContextAccessor();
+            services.AddMediatR(typeof(Startup));
+
+            services.AddSingleton<PlayerIdentity>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Api.Commands;
 using Api.Persistence;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,25 +13,25 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class WaitingRoomsController : ControllerBase
     {
-        private readonly IWaitingRoomRepository _waitingRoomRepository;
+        private readonly IWaitingRoomRepository _repository;
+        private readonly IMediator _mediator;
 
-        public WaitingRoomsController(IWaitingRoomRepository waitingRoomRepository)
+        public WaitingRoomsController(IWaitingRoomRepository repository, IMediator mediator)
         {
-            _waitingRoomRepository = waitingRoomRepository;
+            _repository = repository;
+            _mediator = mediator;
         }
 
         [HttpGet]
-        [Route("")]
         public Task<IEnumerable<WaitingRoom>> Get()
         {
-            return _waitingRoomRepository.GetAsync();
+            return _repository.GetAsync();
         }
 
-        [HttpPost]
-        [Route("Add")]
-        public Task<WaitingRoom> Add(WaitingRoom waitingRoom)
+        [HttpPut]
+        public Task<WaitingRoom> Create(CreateWaitingRoomCommand command)
         {
-            return _waitingRoomRepository.CreateAsync(waitingRoom);
+            return _mediator.Send(command);
         }
     }
 }

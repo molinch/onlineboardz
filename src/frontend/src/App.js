@@ -11,8 +11,10 @@ import AuthenticationStore from './AuthenticationStore';
 import './App.css';
 import logo from './logo.svg';
 import TicTacToe from './games/TicTacToe/TicTacToe';
-import { Layout, Menu, Breadcrumb } from 'antd';
+import 'antd/dist/antd.css';
+import { Layout, Menu, Avatar } from 'antd';
 const { Header, Content, Footer } = Layout;
+const { SubMenu } = Menu;
 
 class App extends React.Component {
   constructor() {
@@ -56,17 +58,30 @@ class App extends React.Component {
   }
 
   render() {
+    let accountMenu = (<></>);
+    if (this.state.user) {
+      const img = (<img src={this.state.user.pictureUrl} style={{height: '50px'}} />);
+      accountMenu = (
+        <SubMenu key="account" title={img} style={{float: 'right'}}>
+          <Menu.Item key="profile"><Link to="/profile">Profile</Link></Menu.Item>
+          <Menu.Item key="friends"><Link to="/friends">Friends</Link></Menu.Item>
+          <Menu.Item key="logout" onClick={this.logout.bind(this)}>Logout</Menu.Item>
+        </SubMenu>
+      );
+    }
+
     return (
       <div>
         <Layout>
-          <Header style={{ position: 'fixed', zIndex: 1, width: '100%' }}>
-            <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
-              <Menu.Item key="1"><Link to="/">Home</Link></Menu.Item>
-              <Menu.Item key="2"><Link to="/about">About</Link></Menu.Item>
-              <Menu.Item key="3"><Link to="/games/tictactoe">TicTacToe</Link></Menu.Item>
+          <Header>
+            <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['home']}>
+              <Menu.Item key="home"><Link to="/">Home</Link></Menu.Item>
+              <Menu.Item key="about"><Link to="/about">About</Link></Menu.Item>
+              <Menu.Item key="game/tictactoe"><Link to="/games/tictactoe">TicTacToe</Link></Menu.Item>
+              {accountMenu}
             </Menu>
           </Header>
-          <Content className="site-layout" style={{ padding: '0 50px', marginTop: 64 }}>
+          <Content >
         
             <h1><img src={logo} className="App-logo" alt="Logo" />Online boardz</h1>
             
