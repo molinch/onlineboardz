@@ -89,7 +89,7 @@ namespace Api
             });
 
             services.AddSingleton<DatabaseSettings>();
-            services.AddSingleton<IWaitingRoomRepository, WaitingRoomRepository>();
+            services.AddSingleton<IGameRepository, GameRepository>();
 
             services.AddHttpContextAccessor();
             services.AddMediatR(typeof(Startup));

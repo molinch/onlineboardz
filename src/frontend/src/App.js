@@ -10,6 +10,7 @@ import LoginError from './login/LoginError';
 import AuthenticationStore from './AuthenticationStore';
 import './App.css';
 import logo from './logo.svg';
+import missingProfilePicture from './missing-profile-picture.png';
 import TicTacToe from './games/TicTacToe/TicTacToe';
 import 'antd/dist/antd.css';
 import { Layout, Menu, Avatar } from 'antd';
@@ -32,6 +33,7 @@ class App extends React.Component {
     const isLoggedIn = this.authenticationStore.isLoggedIn();
     const authUser = isLoggedIn ? this.authenticationStore.user : null;
     if (authUser != null) {
+      // should get data from token claims directly and not call that api
       const response = await fetch('https://localhost:5000/api/users/me', {
           credentials: 'include'
       });
@@ -60,7 +62,7 @@ class App extends React.Component {
   render() {
     let accountMenu = (<></>);
     if (this.state.user) {
-      const img = (<img src={this.state.user.pictureUrl} style={{height: '50px'}} />);
+      const img = (<img src={this.state.user.pictureUrl || missingProfilePicture} alt="your avatar" style={{height: '50px'}} />);
       accountMenu = (
         <SubMenu key="account" title={img} style={{float: 'right'}}>
           <Menu.Item key="profile"><Link to="/profile">Profile</Link></Menu.Item>

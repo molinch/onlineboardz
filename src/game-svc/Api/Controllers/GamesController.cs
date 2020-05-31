@@ -12,25 +12,29 @@ namespace Api.Controllers
     [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class WaitingRoomsController : ControllerBase
+    public class GamesController : ControllerBase
     {
-        private readonly IWaitingRoomRepository _repository;
+        private readonly IGameRepository _repository;
         private readonly IMediator _mediator;
 
-        public WaitingRoomsController(IWaitingRoomRepository repository, IMediator mediator)
+        public GamesController(IGameRepository repository, IMediator mediator)
         {
             _repository = repository;
             _mediator = mediator;
         }
 
         [HttpGet]
-        public Task<IEnumerable<WaitingRoom>> Get()
+        public Task<IEnumerable<Game>> Get()
         {
             return _repository.GetAsync();
         }
 
-        [HttpPut]
-        public Task<WaitingRoom> Create([Required]CreateWaitingRoomCommand command)
+        /// <summary>
+        /// Adds the current player to the waiting room
+        /// </summary>
+        [HttpPatch]
+        [Route("Metadata")]
+        public Task<Game> Update([Required]AddPlayerToGameProposalCommand command)
         {
             return _mediator.Send(command);
         }

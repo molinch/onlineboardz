@@ -1,0 +1,44 @@
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System;
+using System.Collections.Generic;
+
+namespace Api.Persistence
+{
+    public class Game
+    {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? Id { get; set; }
+
+        public GameStatus Status { get; set; }
+
+        public object? State { get; set; }
+
+        public GameMetadata Metadata { get; set; } = null!;
+
+        public class GameMetadata
+        {
+            public int SchemaVersion { get; set; }
+
+            public GameType GameType { get; set; }
+            public TimeSpan MaxDuration { get; set; }
+
+            // if we have a timeout then we could have a number of players between min/max, good idea? overkill?
+            public int MinPlayers { get; set; }
+            public int MaxPlayers { get; set; }
+            public int PlayersCount { get; set; }
+
+            public bool IsOpen { get; set; }
+
+            public List<Player> Players { get; set; } = null!;
+
+            public class Player
+            {
+                public string Id { get; set; } = null!;
+                public string Name { get; set; } = null!;
+                public DateTime AcceptedAt { get; set; }
+            }
+        }
+    }
+}

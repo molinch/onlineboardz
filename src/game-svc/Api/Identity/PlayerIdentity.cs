@@ -13,7 +13,7 @@ namespace Api.Extensions
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public string PlayerId =>
+        public string Id =>
             _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
         public string Name =>
