@@ -1,6 +1,6 @@
-﻿using IdentityModel;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using System.Linq;
+using System.Security.Claims;
 
 namespace Api.Extensions
 {
@@ -14,9 +14,9 @@ namespace Api.Extensions
         }
 
         public string PlayerId =>
-            _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == JwtClaimTypes.Subject).Value;
+            _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
         public string Name =>
-            _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == JwtClaimTypes.Name).Value;
+            _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Name).Value;
     }
 }

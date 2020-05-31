@@ -1,3 +1,8 @@
+# Game service
+It uses .NET5, so to run you will need:
+- SDK preview
+- ASP.NET core runtime preview
+
 # Game service database
 MongoDB is used.
 Robo 3T can be used to browse the data.

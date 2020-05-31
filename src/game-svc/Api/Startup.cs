@@ -56,10 +56,21 @@ namespace Api
                 document.AddSecurity("bearer", Enumerable.Empty<string>(), new OpenApiSecurityScheme
                 {
                     Type = OpenApiSecuritySchemeType.OAuth2,
-                    Description = "My Authentication",
-                    Flow = OpenApiOAuth2Flow.Implicit,
+                    Flow = OpenApiOAuth2Flow.AccessCode,
                     Flows = new OpenApiOAuthFlows()
                     {
+                        AuthorizationCode = new OpenApiOAuthFlow()
+                        {
+                            Scopes = new Dictionary<string, string>
+                            {
+                                { "openid", "OpenId" },
+                                { "profile", "Profile" },
+                                { "game-api", "Access game api" }
+                            },
+                            AuthorizationUrl = $"{IdentityServerUri}connect/authorize",
+                            TokenUrl = $"{IdentityServerUri}connect/token",
+                        }
+                        /*
                         Implicit = new OpenApiOAuthFlow()
                         {
                             Scopes = new Dictionary<string, string>
@@ -70,7 +81,7 @@ namespace Api
                             },
                             AuthorizationUrl = $"{IdentityServerUri}connect/authorize",
                             TokenUrl = $"{IdentityServerUri}connect/token"
-                        }
+                        }*/
                     }
                 });
 
@@ -119,6 +130,7 @@ namespace Api
                 {
                     ClientId = "game-service-swagger",
                     AppName = "Swagger UI for Game service",
+                    UsePkceWithAuthorizationCodeGrant = true,
                 };
             });
         }

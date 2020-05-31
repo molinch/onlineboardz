@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Api.Commands;
 using Api.Persistence;
@@ -29,7 +30,7 @@ namespace Api.Controllers
         }
 
         [HttpPut]
-        public Task<WaitingRoom> Create(CreateWaitingRoomCommand command)
+        public Task<WaitingRoom> Create([Required]CreateWaitingRoomCommand command)
         {
             return _mediator.Send(command);
         }

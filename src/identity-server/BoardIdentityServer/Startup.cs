@@ -95,6 +95,9 @@ namespace BoardIdentityServer
                 // see: https://tatvog.wordpress.com/2018/06/05/identityserver4-addsigningcredential-using-certificate-stored-in-azure-key-vault/
             }
 
+            services.AddTransient<IReturnUrlParser, ReturnUrlParser>();
+            services.AddSingleton<IProfileService, ProfileService>();
+
             services
                 .AddAuthentication()
                 .AddGoogle("google", options =>
@@ -124,8 +127,6 @@ namespace BoardIdentityServer
                 });
 
             services.AddControllers();
-            services.AddTransient<IReturnUrlParser, ReturnUrlParser>();
-
             services.AddDbContext<UserDbContext>(options => options.UseNpgsql(ConnectionString));
         }
 
