@@ -7,7 +7,6 @@ Backends: .NET Core
 DB: document DBs, so NoSQL (except for identity provider which will use PostgreSQL)
 
 Patterns: "microservices" in the sense that each services holds his domain
-Maybe these to start
 - identity provider: sign in (with google, fb, twitter, ms), sign-out
 - game service: where the logic of a game is, depending on the game complexity we may want != services
 - account service: profile, friends, chat friends, chat game opponents, global chat?
