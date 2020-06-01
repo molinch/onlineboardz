@@ -100,7 +100,7 @@ namespace BoardIdentityServer
 
             services
                 .AddAuthentication()
-                .AddGoogle("google", options =>
+                .AddGoogle(Provider.Google, options =>
                 {
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.Scope.Add("profile");
@@ -113,7 +113,7 @@ namespace BoardIdentityServer
                     options.ClaimActions.MapJsonKey("locale", "locale", "string");
                     options.SaveTokens = true;
                 })
-                .AddFacebook("facebook", options =>
+                .AddFacebook(Provider.Facebook, options =>
                 {
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
 

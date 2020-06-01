@@ -13,7 +13,7 @@ import logo from './logo.svg';
 import missingProfilePicture from './missing-profile-picture.png';
 import TicTacToe from './games/TicTacToe/TicTacToe';
 import 'antd/dist/antd.css';
-import { Layout, Menu, Avatar } from 'antd';
+import { Layout, Menu } from 'antd';
 const { Header, Content, Footer } = Layout;
 const { SubMenu } = Menu;
 

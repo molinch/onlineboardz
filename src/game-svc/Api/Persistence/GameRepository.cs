@@ -1,4 +1,7 @@
-﻿using MongoDB.Driver;
+﻿using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
+using MongoDB.Driver.Linq;
+using MongoDB.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,55 +10,57 @@ namespace Api.Persistence
 {
     public class GameRepository : IGameRepository
     {
-        private static readonly FindOneAndUpdateOptions<Game, Game> ReturnDocumentAfterUpdate =
-            new FindOneAndUpdateOptions<Game, Game>
-            {
-                ReturnDocument = ReturnDocument.After
-            };
+        private readonly DB _database;
 
-        private readonly IMongoCollection<Game> _waitingRooms;
-
-        public GameRepository(DatabaseSettings settings)
+        public GameRepository(DB database)
         {
-            var client = new MongoClient(settings.ConnectionString);
-            var database = client.GetDatabase(settings.GameDatabaseName);
-            _waitingRooms = database.GetCollection<Game>(nameof(Game));
+            _database = database;
+
+            _database.Index<Game>()
+              .Key(g => g.Status, KeyType.Ascending)
+              .CreateAsync();
         }
 
         public async Task<IEnumerable<Game>> GetAsync()
         {
-            var find = await _waitingRooms.FindAsync(r => true);
-            return await find.ToListAsync();
+            return await _database.Queryable<Game>().ToListAsync();
         }
 
-        public async Task<Game> GetAsync(string id)
+        public Task<Game> GetAsync(string id)
         {
-            var find = await _waitingRooms.FindAsync(r => r.Id == id);
-            return await find.FirstOrDefaultAsync();
+            return _database.Find<Game>().OneAsync(id);
         }
 
-        public async Task<bool> IsAlreadyInWaitingRoomAsync(string playerId)
+        public Task<bool> IsAlreadyInGamesAsync(string playerId)
         {
-            var find = await _waitingRooms.FindAsync(r => r.Metadata.Players.Any(p => p.Id == playerId));
-            return await find.AnyAsync();
+            return _database.Queryable<Game>()
+                .Where(g => g.Metadata.Players.Any(p => p.ID == playerId))
+                .Where(g => g.Status != GameStatus.Finished && g.Status != GameStatus.TimedOut)
+                .AnyAsync();
         }
 
-        public async Task<Game> CreateAsync(Game room)
+        public async Task<Game> CreateAsync(Game game)
         {
-            await _waitingRooms.InsertOneAsync(room);
-            return room;
+            await _database.SaveAsync(game);
+            return game;
         }
 
-        public Task<Game> AddPlayerIfNotThereAsync(string id, Game.GameMetadata.Player player) =>
-            _waitingRooms.FindOneAndUpdateAsync<Game>(
-                r => r.Id == id && !r.Metadata.Players.Any(p => p.Id == player.Id), // && r.Metadata.MaxPlayers > r.Metadata.Players.Count
-                Builders<Game>.Update.AddToSet(r => r.Metadata.Players, player),
-                ReturnDocumentAfterUpdate);
+        public Task<Game> AddPlayerIfNotThereAsync(string id, Game.GameMetadata.Player player)
+        {
+            return _database.UpdateAndGet<Game>()
+                .Match(g => g.ID == id && !g.Metadata.Players.Any(p => p.ID == player.ID))
+                .Modify(g => g.Push(g => g.Metadata.Players, player))
+                .Modify(g => g.Inc(g => g.Metadata.PlayersCount, 1))
+                .ExecuteAsync();
+        }
 
-        public Task RemoveAsync(Game room) =>
-            _waitingRooms.DeleteOneAsync(r => r.Id == room.Id);
+        public Task<Game> SetGameStatus(string id, GameStatus oldStatus, GameStatus newStatus) =>
+            _database.UpdateAndGet<Game>()
+                .Match(g => g.ID == id && g.Status == oldStatus)
+                .Modify(g => g.Status, newStatus)
+                .ExecuteAsync();
 
-        public Task RemoveAsync(string id) =>
-            _waitingRooms.DeleteOneAsync(room => room.Id == id);
+        public async Task RemoveAsync(string id) =>
+            await _database.DeleteAsync<Game>(id);
     }
 }

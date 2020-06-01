@@ -1,4 +1,5 @@
-﻿using Api.Extensions;
+﻿using Api.Exceptions;
+using Api.Extensions;
 using Api.Persistence;
 using MediatR;
 using System;
@@ -21,35 +22,50 @@ namespace Api.Commands
         public class AddPlayerToGameProposalCommandHandler : IRequestHandler<AddPlayerToGameProposalCommand, Game>
         {
             private readonly PlayerIdentity _playerIdentity;
-            private readonly IGameRepository _waitingRoomRepository;
+            private readonly IGameRepository _repository;
 
             public AddPlayerToGameProposalCommandHandler(PlayerIdentity playerIdentity, IGameRepository repository)
             {
                 _playerIdentity = playerIdentity;
-                _waitingRoomRepository = repository;
+                _repository = repository;
             }
 
             public async Task<Game> Handle(AddPlayerToGameProposalCommand request, CancellationToken cancellationToken)
             {
-                if (await _waitingRoomRepository.IsAlreadyInWaitingRoomAsync(_playerIdentity.Id))
+                if (await _repository.IsAlreadyInGamesAsync(_playerIdentity.Id))
                 {
-                    throw new Exception("You are already in a waiting room");
+                    throw new ValidationException("You are already in a game");
                 }
 
-                var game = await _waitingRoomRepository.AddPlayerIfNotThereAsync(request.GameId, new Game.GameMetadata.Player()
+                var waitingRoom = await _repository.AddPlayerIfNotThereAsync(request.GameId, new Game.GameMetadata.Player()
                 {
-                    Id = _playerIdentity.Id,
+                    ID = _playerIdentity.Id,
                     Name = _playerIdentity.Name,
                     AcceptedAt = DateTime.UtcNow
                 });
 
-                if (game.Metadata.MaxPlayers == game.Metadata.Players.Count)
+                if (waitingRoom == null)
                 {
-                    game.Status = GameStatus.InGame;
-                    // notify via signalR
+                    waitingRoom = await _repository.GetAsync(request.GameId);
+                    if (waitingRoom == null)
+                    {
+                        throw new ItemNotFoundException();
+                    }
+
+                    if (waitingRoom.Status != GameStatus.WaitingForPlayers ||
+                        waitingRoom.Metadata.MaxPlayers == waitingRoom.Metadata.PlayersCount)
+                    {
+                        throw new ValidationException("Maximum number of players already reached");
+                    }
                 }
 
-                return game;
+                if (waitingRoom.Metadata.MaxPlayers == waitingRoom.Metadata.Players.Count)
+                {
+                    waitingRoom = await _repository.SetGameStatus(waitingRoom.ID, waitingRoom.Status, GameStatus.InGame);
+                    // inform that game started via SignalR
+                }
+
+                return waitingRoom;
             }
         }
     }

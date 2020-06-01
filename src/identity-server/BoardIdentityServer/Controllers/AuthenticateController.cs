@@ -161,9 +161,9 @@ namespace BoardIdentityServer.Controllers
         {
             switch (provider)
             {
-                case "Google":
+                case Provider.Google:
                     return principal.FindFirst(JwtClaimTypes.Picture).Value;
-                case "Facebook":
+                case Provider.Facebook:
                     var userId = principal.FindFirst(ClaimTypes.NameIdentifier).Value;
                     return $"https://graph.facebook.com/{userId}/picture?type=normal"; // square, small, normal or large
                 default:

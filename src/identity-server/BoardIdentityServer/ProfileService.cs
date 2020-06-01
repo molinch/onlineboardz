@@ -10,6 +10,7 @@ namespace BoardIdentityServer
         public Task GetProfileDataAsync(ProfileDataRequestContext context)
         {
             context.IssuedClaims.Add(context.Subject.FindFirst(ClaimTypes.Name));
+            context.IssuedClaims.Add(context.Subject.FindFirst(ClaimTypes.Email));
             return Task.CompletedTask;
         }
 

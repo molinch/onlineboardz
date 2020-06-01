@@ -1,16 +1,11 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Entities.Core;
 using System;
 using System.Collections.Generic;
 
 namespace Api.Persistence
 {
-    public class Game
+    public class Game: Entity
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string? Id { get; set; }
-
         public GameStatus Status { get; set; }
 
         public object? State { get; set; }
@@ -22,6 +17,11 @@ namespace Api.Persistence
             public int SchemaVersion { get; set; }
 
             public GameType GameType { get; set; }
+
+            /// <summary>
+            /// If greater than 0, specified the maximum time this game may take.
+            /// The game status will change to TimedOut once that duration has been hit.
+            /// </summary>
             public TimeSpan MaxDuration { get; set; }
 
             // if we have a timeout then we could have a number of players between min/max, good idea? overkill?
@@ -35,7 +35,7 @@ namespace Api.Persistence
 
             public class Player
             {
-                public string Id { get; set; } = null!;
+                public string ID { get; set; } = null!;
                 public string Name { get; set; } = null!;
                 public DateTime AcceptedAt { get; set; }
             }

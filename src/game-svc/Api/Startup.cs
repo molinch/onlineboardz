@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MongoDB.Driver;
+using MongoDB.Entities;
 using NSwag;
 using NSwag.AspNetCore;
 using NSwag.Generation.Processors.Security;
@@ -70,31 +72,22 @@ namespace Api
                             AuthorizationUrl = $"{IdentityServerUri}connect/authorize",
                             TokenUrl = $"{IdentityServerUri}connect/token",
                         }
-                        /*
-                        Implicit = new OpenApiOAuthFlow()
-                        {
-                            Scopes = new Dictionary<string, string>
-                            {
-                                { "openid", "OpenId" },
-                                { "profile", "Profile" },
-                                { "game-api", "Access game api" }
-                            },
-                            AuthorizationUrl = $"{IdentityServerUri}connect/authorize",
-                            TokenUrl = $"{IdentityServerUri}connect/token"
-                        }*/
                     }
                 });
 
                 document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("bearer"));
             });
 
-            services.AddSingleton<DatabaseSettings>();
             services.AddSingleton<IGameRepository, GameRepository>();
 
             services.AddHttpContextAccessor();
             services.AddMediatR(typeof(Startup));
 
             services.AddSingleton<PlayerIdentity>();
+            services.AddMongoDBEntities(
+                MongoClientSettings.FromConnectionString(Configuration.GetValue<string>("MongoConnectionString")),
+                Configuration.GetValue<string>("GameDatabaseName")
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

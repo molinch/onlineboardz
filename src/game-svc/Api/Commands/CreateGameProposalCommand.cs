@@ -1,4 +1,5 @@
-﻿using Api.Extensions;
+﻿using Api.Exceptions;
+using Api.Extensions;
 using Api.Persistence;
 using MediatR;
 using System;
@@ -38,9 +39,9 @@ namespace Api.Commands
 
             public async Task<Game> Handle(CreateGameProposalCommand request, CancellationToken cancellationToken)
             {
-                if (await _repository.IsAlreadyInWaitingRoomAsync(_playerIdentity.Id))
+                if (await _repository.IsAlreadyInGamesAsync(_playerIdentity.Id))
                 {
-                    throw new Exception("You are already in a waiting room");
+                    throw new ValidationException("You are already in a game");
                 }
 
                 var game = new Game()
@@ -52,11 +53,12 @@ namespace Api.Commands
                         MinPlayers = request.MinPlayers,
                         MaxPlayers = request.MaxPlayers,
                         IsOpen = request.IsOpen,
+                        PlayersCount = 1,
                         Players = new List<Game.GameMetadata.Player>()
                         {
                             new Game.GameMetadata.Player()
                             {
-                                Id = _playerIdentity.Id,
+                                ID = _playerIdentity.Id,
                                 Name = _playerIdentity.Name,
                                 AcceptedAt = DateTime.UtcNow
                             }

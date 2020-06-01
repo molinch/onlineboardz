@@ -4,6 +4,7 @@
     {
         WaitingForPlayers = 0,
         InGame,
+        TimedOut,
         Finished
     }
 }
