@@ -27,24 +27,26 @@ const SeekGame = () => (
     <div>
         <h1>Seek a game</h1>
 
-        <Card
-            style={{ width: 300 }}
-            cover={
-            <img
-                alt="logo"
-                src={tictactoeLogo}
-            />
-            }
-            actions={[
-                <Join />,
-                <Favorite />,
-            ]}
-        >
-            <Meta
-                title="Tic Tac Toe"
-                description="Game for two players. The player who succeeds in placing three of their marks in a horizontal, vertical, or diagonal row is the winner."
-            />
-        </Card>
+        <div class="seek-cards">
+            <Card
+                style={{ width: 300 }}
+                cover={
+                <img
+                    alt="logo"
+                    src={tictactoeLogo}
+                />
+                }
+                actions={[
+                    <Join />,
+                    <Favorite />,
+                ]}
+            >
+                <Meta
+                    title="Tic Tac Toe"
+                    description="Game for two players. The player who succeeds in placing three of their marks in a horizontal, vertical, or diagonal row is the winner."
+                />
+            </Card>
+        </div>
     </div>
 );
 

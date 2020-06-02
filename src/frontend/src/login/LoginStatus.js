@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from 'antd';
-import { GoogleFilled, FacebookFilled } from '@ant-design/icons';
 
 class LoginStatus extends React.Component {
     render() {
@@ -20,8 +19,8 @@ class LoginStatus extends React.Component {
         return (
             <div>
                 Sign-in
-                <Button icon={<GoogleFilled />} onClick={() => this.props.login("google")}>Google</Button>
-                <Button icon={<FacebookFilled />} onClick={() => this.props.login("facebook")}>Facebook</Button>
+                <Button onClick={() => this.props.login("google")}>Google</Button>
+                <Button onClick={() => this.props.login("facebook")}>Facebook</Button>
             </div>
         );
     }

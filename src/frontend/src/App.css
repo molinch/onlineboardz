@@ -21,6 +21,11 @@
   text-align: 'center';
 }
 
+.seek-cards .ant-card-bordered {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .ant-card-bordered {
   border: 1px solid #ddd;
 }
