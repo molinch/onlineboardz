@@ -1,7 +1,10 @@
 ﻿using Api.Exceptions;
 using Api.Extensions;
 using Api.Persistence;
+using Api.SignalR;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 using System;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -23,18 +26,23 @@ namespace Api.Commands
         {
             private readonly PlayerIdentity _playerIdentity;
             private readonly IGameRepository _repository;
+            private readonly IHubContext<GameHub> _gameHub;
+            private readonly IOptions<GameOptions> _gameOptions;
 
-            public AddPlayerToGameProposalCommandHandler(PlayerIdentity playerIdentity, IGameRepository repository)
+            public AddPlayerToGameProposalCommandHandler(PlayerIdentity playerIdentity, IGameRepository repository,
+                IHubContext<GameHub> gameHub, IOptions<GameOptions> gameOptions)
             {
                 _playerIdentity = playerIdentity;
                 _repository = repository;
+                _gameHub = gameHub;
+                _gameOptions = gameOptions;
             }
 
             public async Task<Game> Handle(AddPlayerToGameProposalCommand request, CancellationToken cancellationToken)
             {
-                if (await _repository.IsAlreadyInGamesAsync(_playerIdentity.Id))
+                if ((await _repository.GetNumberOfGamesAsync(_playerIdentity.Id)) >= _gameOptions.Value.MaxNumberOfGamesPerUser)
                 {
-                    throw new ValidationException("You are already in a game");
+                    throw new ValidationException("Maximum number of games reached");
                 }
 
                 var waitingRoom = await _repository.AddPlayerIfNotThereAsync(request.GameId, new Game.GameMetadata.Player()
@@ -61,8 +69,13 @@ namespace Api.Commands
 
                 if (waitingRoom.Metadata.MaxPlayers == waitingRoom.Metadata.Players.Count)
                 {
-                    waitingRoom = await _repository.SetGameStatus(waitingRoom.ID, waitingRoom.Status, GameStatus.InGame);
-                    // inform that game started via SignalR
+                    var game = await _repository.SetGameStatusAsync(waitingRoom.ID, waitingRoom.Status, GameStatus.InGame);
+                    await _gameHub.Clients.All.SendAsync("GameStarted", game);
+
+                }
+                else
+                {
+                    await _gameHub.Clients.All.SendAsync("PlayerAdded", waitingRoom);
                 }
 
                 return waitingRoom;

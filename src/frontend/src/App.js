@@ -12,8 +12,11 @@ import './App.css';
 import logo from './logo.svg';
 import missingProfilePicture from './missing-profile-picture.png';
 import TicTacToe from './games/TicTacToe/TicTacToe';
+import SeekGame from './SeekGame'
+import Match from './Match'
 import 'antd/dist/antd.css';
 import { Layout, Menu } from 'antd';
+import GameNotificationClient from './NotificationClient';
 const { Header, Content, Footer } = Layout;
 const { SubMenu } = Menu;
 
@@ -21,7 +24,15 @@ class App extends React.Component {
   constructor() {
       super();
       this.authenticationStore = new AuthenticationStore(this.onLoggingError);
+      this.gameNotificationClient = new GameNotificationClient();
       this.state = { user: null };
+  }
+
+  onPlayerAdded() {
+
+  }
+  onGameStarted() {
+
   }
 
   async componentDidMount() {
@@ -39,6 +50,9 @@ class App extends React.Component {
       });
       var user = await response.json();
       this.setState({ user: user });
+
+      var accessToken = this.authenticationStore.user.access_token;
+      await this.gameNotificationClient.load(accessToken);
     }
   }
 
@@ -79,17 +93,21 @@ class App extends React.Component {
             <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['home']}>
               <Menu.Item key="home"><Link to="/">Home</Link></Menu.Item>
               <Menu.Item key="about"><Link to="/about">About</Link></Menu.Item>
+              <Menu.Item key="seek"><Link to="/seek">Seek game</Link></Menu.Item>
+              <Menu.Item key="match"><Link to="/match">Match!</Link></Menu.Item>
               <Menu.Item key="game/tictactoe"><Link to="/games/tictactoe">TicTacToe</Link></Menu.Item>
               {accountMenu}
             </Menu>
           </Header>
-          <Content >
+          <Content>
         
             <h1><img src={logo} className="App-logo" alt="Logo" />Online boardz</h1>
             
             <Router>
               <Home path="/" />
               <About path="/about" />
+              <SeekGame path="/seek" />
+              <Match path="/match" />
               <TicTacToe path="/games/tictactoe" />
 
               <Login
@@ -117,7 +135,7 @@ class App extends React.Component {
               logout={() => this.logout()}
             />
           </Content>
-          <Footer style={{ textAlign: 'center' }}>
+          <Footer>
             Online boardz ©2020 to bunch of dawgz
           </Footer>
         </Layout>

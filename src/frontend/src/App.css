@@ -12,3 +12,28 @@
     transform: rotate(360deg);
   }
 }
+
+.ant-layout-content {
+  background-color: #fff;
+}
+
+.ant-layout-footer {
+  text-align: 'center';
+}
+
+.ant-card-bordered {
+  border: 1px solid #ddd;
+}
+
+.ant-card-actions .anticon {
+  font-size: 24px !important;
+}
+.icon-text .text {
+  display: block;
+}
+.ant-card-actions .icon-join:hover {
+  color: orangered;
+}
+.ant-card-actions .icon-favorite:hover {
+  color: #eb2f96;
+}

@@ -1,7 +1,9 @@
 ﻿using Api.Exceptions;
 using Api.Extensions;
 using Api.Persistence;
+using Api.SignalR;
 using MediatR;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -30,18 +32,20 @@ namespace Api.Commands
         {
             private readonly PlayerIdentity _playerIdentity;
             private readonly IGameRepository _repository;
+            private readonly IOptions<GameOptions> _gameOptions;
 
-            public CreateGameProposalCommandHandler(PlayerIdentity playerIdentity, IGameRepository repository)
+            public CreateGameProposalCommandHandler(PlayerIdentity playerIdentity, IGameRepository repository, IOptions<GameOptions> gameOptions)
             {
                 _playerIdentity = playerIdentity;
                 _repository = repository;
+                _gameOptions = gameOptions;
             }
 
             public async Task<Game> Handle(CreateGameProposalCommand request, CancellationToken cancellationToken)
             {
-                if (await _repository.IsAlreadyInGamesAsync(_playerIdentity.Id))
+                if ((await _repository.GetNumberOfGamesAsync(_playerIdentity.Id)) >= _gameOptions.Value.MaxNumberOfGamesPerUser)
                 {
-                    throw new ValidationException("You are already in a game");
+                    throw new ValidationException("Maximum number of games reached");
                 }
 
                 var game = new Game()

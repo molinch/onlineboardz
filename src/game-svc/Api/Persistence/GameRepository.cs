@@ -31,12 +31,12 @@ namespace Api.Persistence
             return _database.Find<Game>().OneAsync(id);
         }
 
-        public Task<bool> IsAlreadyInGamesAsync(string playerId)
+        public Task<int> GetNumberOfGamesAsync(string playerId)
         {
             return _database.Queryable<Game>()
                 .Where(g => g.Metadata.Players.Any(p => p.ID == playerId))
                 .Where(g => g.Status != GameStatus.Finished && g.Status != GameStatus.TimedOut)
-                .AnyAsync();
+                .CountAsync();
         }
 
         public async Task<Game> CreateAsync(Game game)
@@ -54,7 +54,7 @@ namespace Api.Persistence
                 .ExecuteAsync();
         }
 
-        public Task<Game> SetGameStatus(string id, GameStatus oldStatus, GameStatus newStatus) =>
+        public Task<Game> SetGameStatusAsync(string id, GameStatus oldStatus, GameStatus newStatus) =>
             _database.UpdateAndGet<Game>()
                 .Match(g => g.ID == id && g.Status == oldStatus)
                 .Modify(g => g.Status, newStatus)

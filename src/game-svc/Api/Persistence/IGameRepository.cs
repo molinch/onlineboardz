@@ -9,8 +9,8 @@ namespace Api.Persistence
         Task<Game> CreateAsync(Game room);
         Task<IEnumerable<Game>> GetAsync();
         Task<Game> GetAsync(string id);
-        Task<bool> IsAlreadyInGamesAsync(string playerId);
+        Task<int> GetNumberOfGamesAsync(string playerId);
         Task RemoveAsync(string id);
-        Task<Game> SetGameStatus(string id, GameStatus oldStatus, GameStatus newStatus);
+        Task<Game> SetGameStatusAsync(string id, GameStatus oldStatus, GameStatus newStatus);
     }
 }
