@@ -1,7 +1,6 @@
 ﻿using IdentityModel;
 using IdentityServer4.Models;
 using IdentityServer4.Services;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BoardIdentityServer
@@ -10,8 +9,8 @@ namespace BoardIdentityServer
     {
         public Task GetProfileDataAsync(ProfileDataRequestContext context)
         {
-            context.IssuedClaims.Add(context.Subject.FindFirst(ClaimTypes.Name));
-            context.IssuedClaims.Add(context.Subject.FindFirst(ClaimTypes.Email));
+            context.IssuedClaims.Add(context.Subject.FindFirst(JwtClaimTypes.Name));
+            context.IssuedClaims.Add(context.Subject.FindFirst(JwtClaimTypes.Email));
             context.IssuedClaims.Add(context.Subject.FindFirst(JwtClaimTypes.Picture));
             return Task.CompletedTask;
         }

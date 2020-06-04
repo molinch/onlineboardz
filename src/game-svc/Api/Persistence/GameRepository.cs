@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using MongoDB.Entities;
 using System.Collections.Generic;

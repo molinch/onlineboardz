@@ -1,4 +1,5 @@
 using Api.Commands;
+using Api.Exceptions;
 using Api.Extensions;
 using Api.Persistence;
 using Api.SignalR;
@@ -118,7 +119,7 @@ namespace Api
             );
 
             services.AddSignalR();
-            services.AddOptions<GameOptions>().Bind(Configuration.GetSection("Game"));
+            services.AddOptions<GameOptions>().Bind(Configuration.GetSection("Game"), options => options.BindNonPublicProperties = true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -140,6 +141,11 @@ namespace Api
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseExceptionHandler(new ExceptionHandlerOptions
+            {
+                ExceptionHandler = new ExceptionHandler().Invoke
+            });
 
             app.UseEndpoints(endpoints =>
             {

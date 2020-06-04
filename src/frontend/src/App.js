@@ -12,7 +12,7 @@ import './App.css';
 import logo from './logo.svg';
 import missingProfilePicture from './missing-profile-picture.png';
 import TicTacToe from './games/TicTacToe/TicTacToe';
-import SeekGame from './SeekGame'
+import JoinGame from './JoinGame'
 import Match from './Match'
 import 'antd/dist/antd.css';
 import { Layout, Menu } from 'antd';
@@ -44,12 +44,21 @@ class App extends React.Component {
     const isLoggedIn = this.authenticationStore.isLoggedIn();
     const authUser = isLoggedIn ? this.authenticationStore.user : null;
     if (authUser != null) {
-      // should get data from token claims directly and not call that api
-      const response = await fetch('https://localhost:5000/api/users/me', {
-          credentials: 'include'
-      });
-      var user = await response.json();
-      this.setState({ user: user });
+      this.setState({ user:
+        {
+          name: authUser.profile.name,
+          email: authUser.profile.email,
+          picture: authUser.profile.picture,
+          getFetchOptions: function() {
+            var accessToken = this.authenticationStore.user.access_token;
+            return {
+              headers: {
+                Authorization: `Bearer ${accessToken}`
+              }
+            };
+          }.bind(this)
+        }
+       });
 
       var accessToken = this.authenticationStore.user.access_token;
       await this.gameNotificationClient.load(accessToken);
@@ -76,7 +85,7 @@ class App extends React.Component {
   render() {
     let accountMenu = (<></>);
     if (this.state.user) {
-      const img = (<img src={this.state.user.pictureUrl || missingProfilePicture} alt="your avatar" style={{height: '50px'}} />);
+      const img = (<img src={this.state.user.picture || missingProfilePicture} alt="your avatar" style={{height: '50px'}} />);
       accountMenu = (
         <SubMenu key="account" title={img} style={{float: 'right'}}>
           <Menu.Item key="profile"><Link to="/profile">Profile</Link></Menu.Item>
@@ -93,8 +102,8 @@ class App extends React.Component {
             <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['home']}>
               <Menu.Item key="home"><Link to="/">Home</Link></Menu.Item>
               <Menu.Item key="about"><Link to="/about">About</Link></Menu.Item>
-              <Menu.Item key="seek"><Link to="/seek">Seek game</Link></Menu.Item>
               <Menu.Item key="match"><Link to="/match">Match!</Link></Menu.Item>
+              <Menu.Item key="join"><Link to="/join">Join game</Link></Menu.Item>
               <Menu.Item key="game/tictactoe"><Link to="/games/tictactoe">TicTacToe</Link></Menu.Item>
               {accountMenu}
             </Menu>
@@ -106,7 +115,7 @@ class App extends React.Component {
             <Router>
               <Home path="/" />
               <About path="/about" />
-              <SeekGame path="/seek" />
+              <JoinGame path="/join" user={this.state.user} />
               <Match path="/match" />
               <TicTacToe path="/games/tictactoe" />
 

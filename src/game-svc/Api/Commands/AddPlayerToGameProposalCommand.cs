@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using System;
+using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,6 +60,11 @@ namespace Api.Commands
                     {
                         throw new ItemNotFoundException();
                     }
+                    
+                    if (waitingRoom.Metadata.Players.Any(p => p.ID == _playerIdentity.Id))
+                    {
+                        throw new ValidationException("You are already in the game");
+                    }
 
                     if (waitingRoom.Status != GameStatus.WaitingForPlayers ||
                         waitingRoom.Metadata.MaxPlayers == waitingRoom.Metadata.PlayersCount)
@@ -71,7 +77,6 @@ namespace Api.Commands
                 {
                     var game = await _repository.SetGameStatusAsync(waitingRoom.ID, waitingRoom.Status, GameStatus.InGame);
                     await _gameHub.Clients.All.SendAsync("GameStarted", game);
-
                 }
                 else
                 {

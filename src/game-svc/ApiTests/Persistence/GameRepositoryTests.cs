@@ -2,6 +2,7 @@ using Api.Persistence;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
+using MongoDB.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using Xunit;
 
 namespace ApiTests.Persistence
 {
-    public class GameRepositoryTests
+    public class GameRepositoryTests: IDisposable
     {
         private static readonly Game.GameMetadata.Player Einstein = new Game.GameMetadata.Player()
         {
@@ -24,7 +25,11 @@ namespace ApiTests.Persistence
             AcceptedAt = DateTime.UtcNow
         };
 
+        private static readonly Random _random = new Random();
         private readonly IConfigurationRoot _configuration;
+        private readonly string _dbName;
+        private readonly MongoClientSettings _mongoClientSettings;
+        private readonly GameRepository _repository;
 
         public GameRepositoryTests()
         {
@@ -32,13 +37,23 @@ namespace ApiTests.Persistence
                 .AddUserSecrets(typeof(GameRepositoryTests).Assembly)
                 .AddJsonFile("appsettings.json")
                 .Build();
+
+            // The idea is that each test run gets his own fresh database (dropped during Dispose)
+            // This way there is no state shared between the tests
+            _dbName = "GameDbTest-" + _random.Next();
+            _mongoClientSettings = MongoClientSettings.FromConnectionString(_configuration.GetValue<string>("MongoConnectionString"));
+            _repository = new GameRepository(
+                new DB(
+                    _mongoClientSettings,
+                    _dbName
+                ));
         }
 
-        private GameRepository Repository => new GameRepository(
-            new MongoDB.Entities.DB(
-                MongoClientSettings.FromConnectionString(_configuration.GetValue<string>("MongoConnectionString")),
-                _configuration.GetValue<string>("GameDatabaseName")
-            ));
+        public void Dispose()
+        {
+            var client = new MongoClient(_mongoClientSettings);
+            client.DropDatabase(_dbName);
+        }
 
         [Fact]
         public async Task Should_create_game()
@@ -62,7 +77,7 @@ namespace ApiTests.Persistence
             var gameSentToDb = game.DeepClone(); // need to clone it since mongodb will alter it (to add id for example)
 
             // Act
-            var createdGame = await Repository.CreateAsync(gameSentToDb);
+            var createdGame = await _repository.CreateAsync(gameSentToDb);
 
             createdGame.Should().BeEquivalentTo(game, options => options.Excluding(e => e.ID).Excluding(e => e.ModifiedOn));
             createdGame.ID.Should().NotBeNullOrWhiteSpace();
@@ -71,30 +86,51 @@ namespace ApiTests.Persistence
         }
 
         [Fact]
+        public async Task Should_get_games()
+        {
+            var game1 = await _repository.CreateAsync(new Game());
+            var game2 = await _repository.CreateAsync(new Game());
+
+            // Act
+            var games = await _repository.GetAsync();
+
+            games.Should().BeEquivalentTo(new[] { game1, game2 }, options => options
+                .Using<DateTime>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1)) // Mongo slightly changes the datetime
+                .WhenTypeIs<DateTime>());
+        }
+
+        [Fact]
         public async Task Should_be_true_when_already_in_game()
         {
-            var game = new Game()
+            var game1 = new Game()
             {
                 Status = GameStatus.WaitingForPlayers,
                 Metadata = new Game.GameMetadata()
                 {
-                    GameType = GameType.TicTacToe,
-                    MinPlayers = 2,
-                    MaxPlayers = 4,
-                    IsOpen = true,
-                    PlayersCount = 1,
                     Players = new List<Game.GameMetadata.Player>()
                     {
                         Einstein
                     }
                 }
             };
-            game = await Repository.CreateAsync(game);
+            await _repository.CreateAsync(game1);
+            var game2 = new Game()
+            {
+                Status = GameStatus.WaitingForPlayers,
+                Metadata = new Game.GameMetadata()
+                {
+                    Players = new List<Game.GameMetadata.Player>()
+                    {
+                        Einstein
+                    }
+                }
+            };
+            await _repository.CreateAsync(game2);
 
             // Act
-            var isInGame = await Repository.IsAlreadyInGamesAsync(Einstein.ID);
+            var numberOfGames = await _repository.GetNumberOfGamesAsync(Einstein.ID);
 
-            isInGame.Should().BeTrue();
+            numberOfGames.Should().Be(2);
         }
 
         [Fact]
@@ -103,9 +139,9 @@ namespace ApiTests.Persistence
             var newPlayerId = Guid.NewGuid().ToString();
 
             // Act
-            var isInGame = await Repository.IsAlreadyInGamesAsync(newPlayerId);
+            var numberOfGames = await _repository.GetNumberOfGamesAsync(newPlayerId);
 
-            isInGame.Should().BeFalse();
+            numberOfGames.Should().Be(0);
         }
 
         [Fact]
@@ -127,10 +163,10 @@ namespace ApiTests.Persistence
                     }
                 }
             };
-            game = await Repository.CreateAsync(game);
+            game = await _repository.CreateAsync(game);
 
             // Act
-            var updatedGame = await Repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
+            var updatedGame = await _repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
 
             updatedGame.Metadata.PlayersCount.Should().Be(2);
             updatedGame.Metadata.Players.Should().BeEquivalentTo(new[]
@@ -161,13 +197,43 @@ namespace ApiTests.Persistence
                     }
                 }
             };
-            game = await Repository.CreateAsync(game);
-            await Repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
+            game = await _repository.CreateAsync(game);
+            await _repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
 
             // Act
-            var updatedGame = await Repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
+            var updatedGame = await _repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
 
             updatedGame.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task Should_status_be_changed_when_not_yet_changed()
+        {
+            var game = new Game()
+            {
+                Status = GameStatus.WaitingForPlayers,
+            };
+            game = await _repository.CreateAsync(game);
+
+            // Act
+            game = await _repository.SetGameStatusAsync(game.ID, game.Status, GameStatus.InGame);
+
+            game.Status.Should().Be(GameStatus.InGame);
+        }
+
+        [Fact]
+        public async Task Should_no_change_status_when_it_was_changed_meanwhile()
+        {
+            var game = new Game()
+            {
+                Status = GameStatus.InGame,
+            };
+            game = await _repository.CreateAsync(game);
+
+            // Act: similate that we look for a waiting game, while in db it's already ingame
+            game = await _repository.SetGameStatusAsync(game.ID, GameStatus.WaitingForPlayers, GameStatus.InGame);
+
+            game.Should().BeNull();
         }
     }
 }

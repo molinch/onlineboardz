@@ -131,10 +131,10 @@ namespace BoardIdentityServer.Controllers
             // this is typically used to store data needed for signout from those protocols.
             var additionalLocalClaims = new List<Claim>()
             {
-                externalUser.FindFirst(ClaimTypes.Name),
-                externalUser.FindFirst(ClaimTypes.Email),
+                new Claim(JwtClaimTypes.Name, user.Name),
+                new Claim(JwtClaimTypes.Email, user.Email),
                 new Claim(JwtClaimTypes.Picture, user.PictureUrl)
-        };
+            };
             var localSignInProps = new AuthenticationProperties();
             ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
 

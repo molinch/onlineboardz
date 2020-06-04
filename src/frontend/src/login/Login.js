@@ -16,7 +16,6 @@ class Login extends React.Component {
                 const stateData = await this.props.authenticationStore.getStateData(stateId);
                 if (stateData)
                 {
-                    debugger;
                     const provider = JSON.parse(stateData).data.provider;
                     document.location.href = `https://localhost:5000/api/authenticate/externalLogin?provider=${provider}&returnUrl=${encodeURIComponent(returnUrl)}`;
                     return;
