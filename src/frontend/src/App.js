@@ -3,7 +3,6 @@ import { Router, Link, navigate } from "@reach/router";
 import Home from './Home';
 import About from './About';
 import LoginStatus from './login/LoginStatus';
-import Login from './login/Login';
 import Logout from './login/Logout';
 import LoginCallback from './login/LoginCallback';
 import LoginError from './login/LoginError';
@@ -12,7 +11,7 @@ import './App.css';
 import logo from './logo.svg';
 import missingProfilePicture from './missing-profile-picture.png';
 import TicTacToe from './games/TicTacToe/TicTacToe';
-import JoinGame from './JoinGame'
+import Play from './Play'
 import Match from './Match'
 import 'antd/dist/antd.css';
 import { Layout, Menu } from 'antd';
@@ -23,7 +22,7 @@ const { SubMenu } = Menu;
 class App extends React.Component {
   constructor() {
       super();
-      this.authenticationStore = new AuthenticationStore(this.onLoggingError);
+      this.authenticationStore = new AuthenticationStore(this.onLoggingError, this.onLogged.bind(this));
       this.gameNotificationClient = new GameNotificationClient();
       this.state = { user: null };
   }
@@ -35,34 +34,24 @@ class App extends React.Component {
 
   }
 
-  async componentDidMount() {
-    await this.tryGetUser();
-  }
-
-  async tryGetUser() {
-    await this.authenticationStore.loadUser();
-    const isLoggedIn = this.authenticationStore.isLoggedIn();
-    const authUser = isLoggedIn ? this.authenticationStore.user : null;
-    if (authUser != null) {
-      this.setState({ user:
-        {
-          name: authUser.profile.name,
-          email: authUser.profile.email,
-          picture: authUser.profile.picture,
-          getFetchOptions: function() {
-            var accessToken = this.authenticationStore.user.access_token;
-            return {
-              headers: {
-                Authorization: `Bearer ${accessToken}`
-              }
-            };
-          }.bind(this)
+  async onLogged(user) {
+    this.setState({ user:
+      {
+        name: user.profile.name,
+        email: user.profile.email,
+        picture: user.profile.picture,
+        getFetchOptions: function() {
+          var accessToken = this.authenticationStore.user.access_token;
+          return {
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          };
         }
-       });
+      }
+     });
 
-      var accessToken = this.authenticationStore.user.access_token;
-      await this.gameNotificationClient.load(accessToken);
-    }
+    await this.gameNotificationClient.load(user.access_token);
   }
 
   onLoggingError(error) {
@@ -102,8 +91,7 @@ class App extends React.Component {
             <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['home']}>
               <Menu.Item key="home"><Link to="/">Home</Link></Menu.Item>
               <Menu.Item key="about"><Link to="/about">About</Link></Menu.Item>
-              <Menu.Item key="match"><Link to="/match">Match!</Link></Menu.Item>
-              <Menu.Item key="join"><Link to="/join">Join game</Link></Menu.Item>
+              <Menu.Item key="play"><Link to="/play">Play!</Link></Menu.Item>
               <Menu.Item key="game/tictactoe"><Link to="/games/tictactoe">TicTacToe</Link></Menu.Item>
               {accountMenu}
             </Menu>
@@ -115,15 +103,9 @@ class App extends React.Component {
             <Router>
               <Home path="/" />
               <About path="/about" />
-              <JoinGame path="/join" user={this.state.user} />
-              <Match path="/match" />
+              <Play path="/play" user={this.state.user} />
               <TicTacToe path="/games/tictactoe" />
 
-              <Login
-                path="/login"
-                authenticationStore={this.authenticationStore}
-                onError={error => this.onLoggingError(error)}
-              />
               <Logout
                 path="/logout"
                 authenticationStore={this.authenticationStore}

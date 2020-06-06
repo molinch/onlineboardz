@@ -1,7 +1,7 @@
 import { UserManager, WebStorageStateStore, Log } from "oidc-client";
 
 class AuthenticationStore {
-    constructor(onError) {
+    constructor(onError, onLogged) {
         this.onError = onError;
 
         this.userStore = new WebStorageStateStore({
@@ -14,13 +14,30 @@ class AuthenticationStore {
             redirect_uri: 'http://localhost:3000/login-callback',
             post_logout_redirect_uri: 'http://localhost:3000',
             response_type: 'code',
-            scope: 'openid profile game-api',
+            scope: 'openid profile game-api offline_access',
             revokeAccessTokenOnSignout: true,
-            userStore: this.userStore
+            automaticSilentRenew: true,
+            silent_redirect_uri: window.location.protocol + "//" + window.location.host + "/silent_renew.html",
+            userStore: this.userStore,
+            loadUserInfo: false
         };
 
         Log.logger = console;
+        Log.level = Log.DEBUG;
         this.manager = new UserManager(config);
+        this.onLogged = onLogged;
+
+        (async function() {
+            await this.loadUser();
+            if (this.isLoggedIn()) {
+                onLogged(this.user);
+            } else {
+                this.user = await this.manager.signinSilent();
+                if (this.isLoggedIn) {
+                    onLogged(this.user);
+                }
+            }
+        }.bind(this))();
     }
  
     isLoggedIn() {
@@ -55,6 +72,10 @@ class AuthenticationStore {
     async completeLogin() {
         try {
             this.user = await this.manager.signinRedirectCallback();
+
+            if (this.isLoggedIn) {
+                this.onLogged(this.user);
+            }
         } catch (error) {
             this.onError(error);
         }

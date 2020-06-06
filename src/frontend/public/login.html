@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<body>
+    <script src="oidc-client.min.js"></script>
+    <script>
+        (async function() {
+            const returnUrl = new URLSearchParams(window.location.search).get("ReturnUrl");
+            if (!returnUrl) {
+                const errorText = encodeURIComponent("missing return URL");
+                navigate("/login-error?errorText=" + errorText);
+            }
+
+            const params = new URLSearchParams(returnUrl);
+            const stateId = params.get("state");
+            if (stateId) {
+                try {
+                    const userStore = new Oidc.WebStorageStateStore({
+                        prefix: "oidc."
+                    });
+
+                    const stateData = await userStore.get(stateId);
+                    if (stateData)
+                    {
+                        const provider = JSON.parse(stateData).data.provider;
+                        document.location.href = `https://localhost:5000/api/authenticate/externalLogin?provider=${provider}&returnUrl=${encodeURIComponent(returnUrl)}`;
+                        return;
+                    }
+                } catch (error) {
+                    const errorText = encodeURIComponent(error);
+                    document.location = `/login-error?errorText=${errorText}`;
+                    return;
+                }
+            }
+
+            document.location = "/";
+        })();
+    </script>
+</body>
+</html>

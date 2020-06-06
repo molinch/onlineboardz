@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<body>
+    <script src="oidc-client.min.js"></script>
+    <script>
+        (function() {
+            try {
+                await new Oidc.UserManager().signinSilentCallback();
+            } catch(err) {
+                debugger;
+                console.log(err);
+            };
+        })();
+    </script>
+</body>
+</html>

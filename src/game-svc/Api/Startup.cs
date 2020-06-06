@@ -23,23 +23,35 @@ namespace Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
-            Configuration = configuration;
+            _configuration = configuration;
+            _isDevelopment = env.IsDevelopment();
         }
 
-        public IConfiguration Configuration { get; }
-        private string IdentityServerUri => Configuration.GetValue<string>("IdentityServerUri");
+        private readonly IConfiguration _configuration;
+
+        private readonly bool _isDevelopment;
+
+        private string IdentityServerUri => _configuration.GetValue<string>("IdentityServerUri");
+
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+            if (_isDevelopment)
+            {
+                Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+            }
 
-            services.AddControllers();
+            services.AddControllers()
+                    .AddJsonOptions(options =>
+                    {
+                        options.JsonSerializerOptions.IgnoreNullValues = true;
+                    });
             services.AddAuthorization();
-            services.AddAuthentication("Bearer")
-            .AddJwtBearer("Bearer", options =>
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
                 options.Authority = IdentityServerUri;
                 options.Audience = "game-api";
@@ -53,7 +65,7 @@ namespace Api
                         // If the request is for game hub...
                         var path = context.HttpContext.Request.Path;
                         if (!string.IsNullOrEmpty(accessToken) &&
-                            (path.StartsWithSegments("/hubs/game")))
+                            path.StartsWithSegments("/hubs/game"))
                         {
                             // Read the token out of the query string
                             context.Token = accessToken;
@@ -67,7 +79,7 @@ namespace Api
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    var allowedCorsOrigins = Configuration.GetSection("AllowedCorsOrigins").AsEnumerable()
+                    var allowedCorsOrigins = _configuration.GetSection("AllowedCorsOrigins").AsEnumerable()
                         .Select(p => p.Value)
                         .Where(v => v != null)
                         .ToArray();
@@ -114,12 +126,12 @@ namespace Api
             // to see if we really need to keep that dependency
             // yet we don't use advance functionalities from it
             services.AddMongoDBEntities(
-                MongoClientSettings.FromConnectionString(Configuration.GetValue<string>("MongoConnectionString")),
-                Configuration.GetValue<string>("GameDatabaseName")
+                MongoClientSettings.FromConnectionString(_configuration.GetValue<string>("MongoConnectionString")),
+                _configuration.GetValue<string>("GameDatabaseName")
             );
 
             services.AddSignalR();
-            services.AddOptions<GameOptions>().Bind(Configuration.GetSection("Game"), options => options.BindNonPublicProperties = true);
+            services.AddOptions<GameOptions>().Bind(_configuration.GetSection("Game"), options => options.BindNonPublicProperties = true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
