@@ -93,7 +93,7 @@ namespace Api
             // Add security definition and scopes to document
             services.AddOpenApiDocument(document =>
             {
-                document.AddSecurity("bearer", Enumerable.Empty<string>(), new OpenApiSecurityScheme
+                document.AddSecurity(JwtBearerDefaults.AuthenticationScheme, Enumerable.Empty<string>(), new OpenApiSecurityScheme
                 {
                     Type = OpenApiSecuritySchemeType.OAuth2,
                     Flow = OpenApiOAuth2Flow.AccessCode,

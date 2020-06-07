@@ -9,8 +9,8 @@ function CardIcon(normalIcon, hoveredIcon, className, text) {
 
     const classes = `icon-text ${className}`
     return (
-        <div class={classes} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-            {icon} <span class="text">{text}</span>
+        <div className={classes} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+            {icon} <span className="text">{text}</span>
         </div>
     );
 };

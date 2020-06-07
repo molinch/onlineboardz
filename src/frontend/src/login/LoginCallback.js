@@ -6,7 +6,6 @@ class LoginCallback extends React.Component {
         try {
             await this.props.authenticationStore.completeLogin();
             navigate("/");
-            this.props.onLoggedIn();
         } catch (error) {
             this.props.onError(error);
         }

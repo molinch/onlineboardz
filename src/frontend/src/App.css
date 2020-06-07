@@ -42,3 +42,12 @@
 .ant-card-actions .icon-favorite:hover {
   color: #eb2f96;
 }
+
+.seek-cards .ant-card {
+    float: left; /* layout ain't that great with the float since cards can have different heights... */
+    margin: 0 10px 0 10px;
+}
+
+.loggedIn {
+    clear: both;
+}

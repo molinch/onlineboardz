@@ -9,7 +9,7 @@ class LoginStatus extends React.Component {
         const user = this.props.user;
         if (user) {
             return (
-                <div>
+                <div className="loggedIn">
                     <strong>Logged in! <span role="img" aria-label="party">🎉</span></strong><br />
                     <div>Welcome {user.name}</div>
                 </div>

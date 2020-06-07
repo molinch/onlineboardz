@@ -2,15 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { Card } from 'antd';
 import { HeartOutlined, HeartFilled, SmileOutlined, SmileFilled } from '@ant-design/icons';
 import CardIcon from './CardIcon';
-import { GameType, GameTypeI18n } from './games/GameType';
-import tictactoeLogo from './games/TicTacToe/logo.svg';
+import { GameTypeInfo } from './games/GameType';
 import { useTranslation } from 'react-i18next';
 
 const { Meta } = Card;
-const Join = () => CardIcon((<SmileOutlined key="join" />), (<SmileFilled key="join" />), "icon-join", "Join");
-const Favorite = () => CardIcon((<HeartOutlined key="heart" />), (<HeartFilled key="heart" />), "icon-favorite", "Favorite");
+function Join(props) {
+    return CardIcon(
+        (<SmileOutlined key="join" onClick={props.onClick} />),
+        (<SmileFilled key="join" onClick={props.onClick} />),
+        "icon-join", "Join"
+    );
+}
+function Favorite(props) {
+    return CardIcon(
+        (<HeartOutlined key="heart" onClick={props.onClick} />),
+        (<HeartFilled key="heart" onClick={props.onClick} />),
+        "icon-favorite", "Favorite"
+    );
+}
 
 function Play(props) {
+    const { t } = useTranslation();
     const [gameTypes, setGameTypes] = useState([]);
 
     useEffect(() => {
@@ -27,7 +39,14 @@ function Play(props) {
         })();
     },[props.user]);
 
-    const { t, i18n } = useTranslation();
+    function onJoin(gameTypeInfo) {
+        console.log(gameTypeInfo);
+        
+    }
+
+    function onFavorite(gameTypeInfo) {
+
+    }
 
     return (
         <div>
@@ -35,26 +54,26 @@ function Play(props) {
 
             <div className="seek-cards">
                 {gameTypes.map(g => {
-                    const gameName = GameTypeI18n[g];
+                    const gameTypeInfo = GameTypeInfo[g.gameType];
 
                     return (
                         <Card
-                            key={gameName}
+                            key={gameTypeInfo.name}
                             style={{ width: 300 }}
                             cover={
                             <img
                                 alt="logo"
-                                src={tictactoeLogo}
+                                src={gameTypeInfo.logo}
                             />
                             }
                             actions={[
-                                <Join />,
-                                <Favorite />,
+                                <Join onClick={() => onJoin(gameTypeInfo)} />,
+                                <Favorite onClick={() => onFavorite(gameTypeInfo)} />
                             ]}
                         >
                             <Meta
-                                title={t(gameName)}
-                                description={t(gameName+"-Desc")}
+                                title={t(gameTypeInfo.name)}
+                                description={t(gameTypeInfo.name+"-Desc")}
                             />
                         </Card>
                     );

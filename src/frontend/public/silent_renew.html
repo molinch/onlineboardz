@@ -3,7 +3,7 @@
 <body>
     <script src="oidc-client.min.js"></script>
     <script>
-        (function() {
+        (async function() {
             try {
                 await new Oidc.UserManager().signinSilentCallback();
             } catch(err) {

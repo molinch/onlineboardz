@@ -11,19 +11,10 @@ namespace Api.Controllers
     public class GameTypesController : ControllerBase
     {
         [HttpGet]
-        public IEnumerable<GameType> Get()
+        public IEnumerable<GameTypeMetadata> Get()
         {
             // returns the type of game that are enabled, and in which order they should be proposed in the UI
-            return new[]
-            {
-                GameType.TicTacToe,
-                GameType.Memory,
-                GameType.SnakeAndLadders,
-                GameType.FindSameAndTapIt,
-                GameType.FindStorytellerCard,
-                GameType.CardBattle,
-                GameType.Scrabble,
-            };
+            return GameTypeMetadata.All;
         }
     }
 }
