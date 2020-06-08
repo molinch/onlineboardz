@@ -1,4 +1,5 @@
 import { HubConnectionBuilder, HttpTransportType } from '@microsoft/signalr';
+import config from './config';
 
 class GameNotificationClient {
   constructor(onPlayerAdded, onGameStarted) {
@@ -15,7 +16,7 @@ class GameNotificationClient {
         };
       
         const connection = new HubConnectionBuilder()
-          .withUrl('https://localhost:5001/hubs/game', options)
+          .withUrl(`${config.GameServiceUri}/hubs/game`, options)
           .build();
         await connection.start();
 

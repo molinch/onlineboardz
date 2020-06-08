@@ -1,13 +1,15 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
-const About = () => (
-    <div>
-        <h1>About</h1>
+const About = () => {
+    const { t } = useTranslation();
+
+    return (
         <div>
-            Online boardz is a brilliant idea, why seeing your friends when you can just stay home?
-            Furthermore it's Covid friendly.
+            <h1>{t("About")}</h1>
+            <div>{t("About-Desc")}</div>
         </div>
-    </div>
-);
+    );
+};
 
 export default About;

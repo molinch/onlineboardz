@@ -211,13 +211,6 @@ namespace BoardIdentityServer.Controllers
         public async Task<IActionResult> Logout(string logoutId)
         {
             var context = await _interaction.GetLogoutContextAsync(logoutId);
-            bool showSignoutPrompt = true;
-
-            if (context?.ShowSignoutPrompt == false)
-            {
-                // it's safe to automatically sign-out
-                showSignoutPrompt = false;
-            }
 
             if (User?.Identity.IsAuthenticated == true)
             {
@@ -225,15 +218,7 @@ namespace BoardIdentityServer.Controllers
                 await HttpContext.SignOutAsync();
             }
 
-            // no external signout supported for now (see \Quickstart\Account\AccountController.cs TriggerExternalSignout)
-            return Ok(new
-            {
-                showSignoutPrompt,
-                ClientName = string.IsNullOrEmpty(context?.ClientName) ? context?.ClientId : context?.ClientName,
-                context?.PostLogoutRedirectUri,
-                context?.SignOutIFrameUrl,
-                logoutId
-            });
+            return Redirect(context?.PostLogoutRedirectUri);
         }
 
         [HttpGet]

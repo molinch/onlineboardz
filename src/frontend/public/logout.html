@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<body>
+    <script src="oidc-client.min.js"></script>
+    <script type="text/javascript" src="global-vars.js"></script>
+    <script>
+        (async function() {
+            const frontendUri = `${window.location.protocol}//${window.location.host}`;
+
+            try {
+                const userStore = new Oidc.WebStorageStateStore({
+                    prefix: "oidc."
+                });
+
+                const managerConfig =  {
+                    authority: globalVars.IdentityServerUri,
+                    client_id: 'js',
+                    post_logout_redirect_uri: frontendUri,
+                    revokeAccessTokenOnSignout: true,
+                    automaticSilentRenew: false,
+                    userStore: userStore,
+                    loadUserInfo: false
+                };
+
+                const manager = new Oidc.UserManager(managerConfig);
+                await manager.signoutRedirectCallback();
+                await manager.removeUser();
+
+                // for some reason removeUser above isn't really removing all the localStorage oidc entries
+                // hence we force removal here
+                for (var i = 0; i < localStorage.length; i++){
+                    const key = localStorage.key(i);
+                    if (key.startsWith("oidc.")) {
+                        delete localStorage[key];
+                    }
+                }
+
+                const logoutId = new URLSearchParams(window.location.search).get("logoutId");
+                document.location = `${globalVars.IdentityServerUri}/api/authenticate/logout?logoutId=${logoutId}&post_logout_redirect_uri=${managerConfig.post_logout_redirect_uri}`;
+            } catch(error) {
+                console.log(error);
+                debugger;
+                const errorText = encodeURIComponent(error);
+                document.location = `${frontendUri}/login-error?errorText=${errorText}`;
+            };
+        })();
+    </script>
+</body>
+</html>

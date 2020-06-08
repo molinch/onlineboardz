@@ -4,53 +4,52 @@ import { HeartOutlined, HeartFilled, SmileOutlined, SmileFilled } from '@ant-des
 import CardIcon from './CardIcon';
 import { GameTypeInfo } from './games/GameType';
 import { useTranslation } from 'react-i18next';
+import config from './config';
 
 const { Meta } = Card;
-function Join(props) {
-    return CardIcon(
+const Join = props =>
+    CardIcon(
         (<SmileOutlined key="join" onClick={props.onClick} />),
         (<SmileFilled key="join" onClick={props.onClick} />),
         "icon-join", "Join"
     );
-}
-function Favorite(props) {
-    return CardIcon(
+const Favorite = props =>
+    CardIcon(
         (<HeartOutlined key="heart" onClick={props.onClick} />),
         (<HeartFilled key="heart" onClick={props.onClick} />),
         "icon-favorite", "Favorite"
     );
-}
 
-function Play(props) {
+const Play = props => {
     const { t } = useTranslation();
     const [gameTypes, setGameTypes] = useState([]);
 
     useEffect(() => {
         if (!props.user) return;
 
-        (async function() {
+        (async function () {
             try {
-                const response = await fetch('https://localhost:5001/gameTypes/', props.user.getFetchOptions());
+                const response = await fetch(`${config.GameServiceUri}/gameTypes/`, props.user.getFetchOptions());
                 var fetchedGameTypes = await response.json();
                 setGameTypes(fetchedGameTypes);
             } catch (error) {
                 console.log(error);
             }
         })();
-    },[props.user]);
+    }, [props.user]);
 
-    function onJoin(gameTypeInfo) {
+    const onJoin = gameTypeInfo => {
         console.log(gameTypeInfo);
-        
+
     }
 
-    function onFavorite(gameTypeInfo) {
+    const onFavorite = gameTypeInfo => {
 
     }
 
     return (
         <div>
-            <h1>Choose a game</h1>
+            <h1>{t('ChooseGame')}</h1>
 
             <div className="seek-cards">
                 {gameTypes.map(g => {
@@ -61,10 +60,10 @@ function Play(props) {
                             key={gameTypeInfo.name}
                             style={{ width: 300 }}
                             cover={
-                            <img
-                                alt="logo"
-                                src={gameTypeInfo.logo}
-                            />
+                                <img
+                                    alt="logo"
+                                    src={gameTypeInfo.logo}
+                                />
                             }
                             actions={[
                                 <Join onClick={() => onJoin(gameTypeInfo)} />,
@@ -73,7 +72,7 @@ function Play(props) {
                         >
                             <Meta
                                 title={t(gameTypeInfo.name)}
-                                description={t(gameTypeInfo.name+"-Desc")}
+                                description={t(gameTypeInfo.name + "-Desc")}
                             />
                         </Card>
                     );

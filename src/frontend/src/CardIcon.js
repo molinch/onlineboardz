@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function CardIcon(normalIcon, hoveredIcon, className, text) {
+const CardIcon = (normalIcon, hoveredIcon, className, text) => {
     const [isHovered, setIsHovered] = useState(0);
 
     const icon = isHovered ?

@@ -1,19 +1,20 @@
 import React from 'react';
-import { navigate } from "@reach/router"
+import { navigate } from '@reach/router';
+import { useRunOnce } from '../CustomHooks';
 
-class Logout extends React.Component {
-    async componentDidMount() {
-        try {
-            await this.props.authenticationStore.completeLogout();
-            navigate("/");
-        } catch (error) {
-            this.props.onError(error);
-        }
-    }
+const Logout = props => {
+    useRunOnce(() => {
+        (async () => {
+            try {
+                await props.authenticationStore.completeLogout();
+                navigate("/");
+            } catch (error) {
+                props.onError(error);
+            }
+        })();
+    });
 
-    render() {
-        return (<></>);
-    }
-}
+    return (<></>);
+};
 
 export default Logout;

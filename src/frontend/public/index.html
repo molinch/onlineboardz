@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
+    <script>
+        if (window.location !== window.parent.location) {
+            // special case: when oidc client silently renews the access token via an iframe
+            // then it may error, in which case it is routed in the SPA but we don't want anything to happen
+            // else while in development mode it would try to register again websockets etc...
+            document.location = "about:blank";
+        }
+    </script>
+    <script type="text/javascript" src="/global-vars.js"></script>
+
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Online boardz allows to play many games with your friends"
-    />
+    <meta name="description" content="Online boardz allows to play many games with your friends" />
     <!-- <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" /> -->
     <!--
       manifest.json provides metadata used when your web app is installed on a
@@ -25,18 +32,9 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Online boardz!</title>
+</head>
 
-    <script>
-      if (window.location !== window.parent.location)
-      {
-        // special case: when oidc client silently renews the access token via an iframe
-        // then it may error, in which case it is routed in the SPA but we don't want anything to happen
-        // else while in development mode it would try to register again websockets etc...
-        document.location = "about:blank";
-      }
-    </script>
-  </head>
-  <body>
+<body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
@@ -49,5 +47,6 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-  </body>
+</body>
+
 </html>

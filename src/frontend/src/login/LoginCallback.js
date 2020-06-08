@@ -1,19 +1,18 @@
 import React from 'react';
-import { navigate } from "@reach/router"
+import { useRunOnce } from '../CustomHooks';
 
-class LoginCallback extends React.Component {
-    async componentDidMount() {
-        try {
-            await this.props.authenticationStore.completeLogin();
-            navigate("/");
-        } catch (error) {
-            this.props.onError(error);
-        }
-    }
+const LoginCallback = props => {
+    useRunOnce(() => {
+        (async () => {
+            try {
+                await props.authenticationStore.completeLogin();
+            } catch (error) {
+                props.onError(error);
+            }
+        })();
+    });
 
-    render() {
-        return (<div></div>);
-    }
+    return (<div></div>);
 }
 
 export default LoginCallback;
