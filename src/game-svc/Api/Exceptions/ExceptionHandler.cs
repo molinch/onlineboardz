@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -22,7 +23,6 @@ namespace Api.Exceptions
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(new ProblemDetails()
                 {
-                    Status = context.Response.StatusCode,
                     Title = contextFeature.Error.Message
                 }));
             }

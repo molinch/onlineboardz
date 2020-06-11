@@ -1,23 +1,24 @@
-body {
-    font: 14px "Century Gothic", Futura, sans-serif;
-    margin: 20px;
-  }
-  
-  ol, ul {
+/*body {
+    font: 14px sans-serif;
+    /* Century Gothic", Futura
+    /*margin: 20px;
+}*/
+
+.tictactoe ol, ul {
     padding-left: 30px;
-  }
-  
-  .board-row:after {
+}
+
+.tictactoe .board-row:after {
     clear: both;
     content: "";
     display: table;
-  }
-  
-  .status {
+}
+
+.tictactoe .status {
     margin-bottom: 10px;
-  }
-  
-  .square {
+}
+
+.tictactoe .square {
     background: #fff;
     border: 1px solid #999;
     float: left;
@@ -30,22 +31,21 @@ body {
     padding: 0;
     text-align: center;
     width: 34px;
-  }
-  
-  .square:focus {
+}
+
+.tictactoe .square:focus {
     outline: none;
-  }
-  
-  .kbd-navigation .square:focus {
+}
+
+.tictactoe .kbd-navigation .square:focus {
     background: #ddd;
-  }
-  
-  .game {
+}
+
+.tictactoe {
     display: flex;
     flex-direction: row;
-  }
-  
-  .game-info {
+}
+
+.tictactoe .game-info {
     margin-left: 20px;
-  }
-  
+}

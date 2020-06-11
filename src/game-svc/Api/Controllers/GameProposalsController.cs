@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Api.Commands;
 using Api.Persistence;
@@ -14,23 +13,15 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class GameProposalsController : ControllerBase
     {
-        private readonly IGameRepository _repository;
         private readonly IMediator _mediator;
 
-        public GameProposalsController(IGameRepository repository, IMediator mediator)
+        public GameProposalsController(IMediator mediator)
         {
-            _repository = repository;
             _mediator = mediator;
         }
 
-        [HttpGet]
-        public Task<IEnumerable<Game>> Get()
-        {
-            return _repository.GetAsync();
-        }
-
         /// <summary>
-        /// Creates a waiting room that includes the current player
+        /// Creates a waiting room/game that includes the current player
         /// </summary>
         [HttpPost]
         public Task<Game> Create([Required]CreateGameProposalCommand command)
@@ -39,10 +30,19 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Adds the current player to the waiting room
+        /// Adds the current player to the specifig waiting room/game
         /// </summary>
-        [HttpPatch]
-        public Task<Game> Update([Required]AddPlayerToGameProposalCommand command)
+        [HttpPatch("join")]
+        public Task<Game> Update([Required]AddPlayerToSpecificGameCommand command)
+        {
+            return _mediator.Send(command);
+        }
+
+        /// <summary>
+        /// Adds the current player to any waiting room/game that matches
+        /// </summary>
+        [HttpPatch("joinAny")]
+        public Task<Game> Update([Required][FromBody] AddPlayerToAnyGameCommand command)
         {
             return _mediator.Send(command);
         }

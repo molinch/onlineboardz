@@ -113,15 +113,13 @@ namespace Api
                     }
                 });
 
-                document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("bearer"));
+                document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor(JwtBearerDefaults.AuthenticationScheme));
             });
 
             services.AddSingleton<IGameRepository, GameRepository>();
 
             services.AddHttpContextAccessor();
             services.AddMediatR(typeof(Startup));
-
-            services.AddSingleton<PlayerIdentity>();
 
             // to see if we really need to keep that dependency
             // yet we don't use advance functionalities from it
@@ -132,6 +130,10 @@ namespace Api
 
             services.AddSignalR();
             services.AddOptions<GameOptions>().Bind(_configuration.GetSection("Game"), options => options.BindNonPublicProperties = true);
+
+            // Online boardz DI setup
+            services.AddSingleton<PlayerIdentity>();
+            services.AddSingleton<GameAssert>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -175,6 +177,22 @@ namespace Api
                     UsePkceWithAuthorizationCodeGrant = true,
                 };
             });
+
+            InitializeMongoDb(app);
+        }
+
+        private void InitializeMongoDb(IApplicationBuilder app)
+        {
+            var db = app.ApplicationServices.GetService<DB>();
+            db.Index<Game>()
+                .Key(g => g.Status, KeyType.Ascending)
+                .Create();
+            db.Index<Game>()
+                .Key(g => g.Metadata.GameType, KeyType.Ascending)
+                .Create();
+            db.Collection<Game>().Indexes.CreateOne(new CreateIndexModel<Game>(
+                new IndexKeysDefinitionBuilder<Game>().Ascending(new StringFieldDefinition<Game>("Metadata.Players.ID"))
+            ));
         }
     }
 }

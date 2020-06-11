@@ -5,9 +5,10 @@ import CardIcon from './CardIcon';
 import { GameTypeInfo } from './games/GameType';
 import { useTranslation } from 'react-i18next';
 import config from './config';
+import { navigate } from "@reach/router";
 
 const { Meta } = Card;
-const Join = props =>
+const ChooseGame = props =>
     CardIcon(
         (<SmileOutlined key="join" onClick={props.onClick} />),
         (<SmileFilled key="join" onClick={props.onClick} />),
@@ -23,24 +24,23 @@ const Favorite = props =>
 const Play = props => {
     const { t } = useTranslation();
     const [gameTypes, setGameTypes] = useState([]);
+    const [error, setError] = useState(<></>);
 
     useEffect(() => {
         if (!props.user) return;
 
-        (async function () {
-            try {
-                const response = await fetch(`${config.GameServiceUri}/gameTypes/`, props.user.getFetchOptions());
-                var fetchedGameTypes = await response.json();
-                setGameTypes(fetchedGameTypes);
-            } catch (error) {
-                console.log(error);
+        (async () => {
+            const response = await props.fetchWithUi.get(`${config.GameServiceUri}/gameTypes/`);
+            if (response.error) {
+                setError(response.error);
+                return;
             }
+            setGameTypes(response);
         })();
-    }, [props.user]);
+    }, [props]);
 
-    const onJoin = gameTypeInfo => {
-        console.log(gameTypeInfo);
-
+    const onGameChosen = gameTypeInfo => {
+        navigate(`/play/${gameTypeInfo.name}`);
     }
 
     const onFavorite = gameTypeInfo => {
@@ -50,11 +50,11 @@ const Play = props => {
     return (
         <div>
             <h1>{t('ChooseGame')}</h1>
+            {error}
 
             <div className="seek-cards">
                 {gameTypes.map(g => {
-                    const gameTypeInfo = GameTypeInfo[g.gameType];
-
+                    const gameTypeInfo = GameTypeInfo.ById(g.gameType);
                     return (
                         <Card
                             key={gameTypeInfo.name}
@@ -66,7 +66,7 @@ const Play = props => {
                                 />
                             }
                             actions={[
-                                <Join onClick={() => onJoin(gameTypeInfo)} />,
+                                <ChooseGame onClick={() => onGameChosen(gameTypeInfo)} />,
                                 <Favorite onClick={() => onFavorite(gameTypeInfo)} />
                             ]}
                         >

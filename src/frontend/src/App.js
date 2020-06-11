@@ -1,43 +1,31 @@
 import React, { useState } from 'react';
-import { Router, Link, navigate } from "@reach/router";
-import Home from './Home';
-import About from './About';
+import { Link, navigate } from "@reach/router";
 import LoginStatus from './login/LoginStatus';
-import Logout from './login/Logout';
-import LoginCallback from './login/LoginCallback';
-import LoginError from './login/LoginError';
 import AuthenticationStore from './AuthenticationStore';
 import './App.css';
 import logo from './logo.svg';
 import missingProfilePicture from './missing-profile-picture.png';
-import TicTacToe from './games/TicTacToe/TicTacToe';
-import Play from './Play'
-import Match from './Match'
 import 'antd/dist/antd.css';
 import { Layout, Menu } from 'antd';
 import GameNotificationClient from './NotificationClient';
 import i18n from './languages/i18n';
 import { useTranslation } from 'react-i18next';
 import { useCreateOnce } from './CustomHooks';
+import Routes from './Routes';
+import FetchWithUIFeedback from './FetchWithUIFeedback';
 const { Header, Content, Footer } = Layout;
 const { SubMenu } = Menu;
 
 function App() {
     const onLogged = async user => {
-        navigate('/'); // we might want to redirect to the page where we were before
+        if (window.location.href.includes("login") || window.location.href.includes("logout")) {
+            navigate('/');
+        }
 
         setUser({
             name: user.profile.name,
             email: user.profile.email,
             picture: user.profile.picture,
-            getFetchOptions: () => {
-                var accessToken = authenticationStore.user.access_token;
-                return {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                };
-            }
         });
 
         await gameNotificationClient.load(user.access_token);
@@ -64,6 +52,7 @@ function App() {
     const { t } = useTranslation();
     const authenticationStore = useCreateOnce(() => new AuthenticationStore(onLoggingError, onLogged));
     const gameNotificationClient = useCreateOnce(() => new GameNotificationClient());
+    const fetchWithUi = new FetchWithUIFeedback(() => authenticationStore?.user?.access_token);
 
     const switchLanguage = lng => {
         i18n.changeLanguage(lng);
@@ -77,7 +66,11 @@ function App() {
     );
     let accountMenu = (<></>);
     if (user) {
-        const img = (<img src={user.picture || missingProfilePicture} alt={t("YourAvatar")} style={{ height: '50px' }} />);
+        const img = (
+        <img
+            src={user.picture || missingProfilePicture}
+            alt={t("YourAvatar")} style={{ height: '50px' }} referrerPolicy="no-referrer"
+        />);
         accountMenu = (
             <SubMenu key="account" title={img} style={{ float: 'right' }}>
                 <Menu.Item key="profile"><Link to="/profile">{t("Profile")}</Link></Menu.Item>
@@ -95,38 +88,24 @@ function App() {
                         <Menu.Item key="home"><Link to="/">{t("Home")}</Link></Menu.Item>
                         <Menu.Item key="about"><Link to="/about">{t("About")}</Link></Menu.Item>
                         <Menu.Item key="play"><Link to="/play">{t("Play")}</Link></Menu.Item>
-                        <Menu.Item key="game/tictactoe"><Link to="/games/tictactoe">{t("TicTacToe")}</Link></Menu.Item>
+                        <Menu.Item key="games-TicTacToe"><Link to="/games/TicTacToe/dummy">{t("TicTacToe")}</Link></Menu.Item>
                         {languageSelector}
                         {accountMenu}
                     </Menu>
                 </Header>
                 <Content>
-
                     <h1><img src={logo} className="App-logo" alt={t("OnlineBoardzLogo")} />{t("OnlineBoardz")}</h1>
 
-                    <Router>
-                        <Home path="/" />
-                        <About path="/about" />
-                        <Play path="/play" user={user} />
-                        <TicTacToe path="/games/tictactoe" />
-
-                        <Logout
-                            path="/logout"
-                            authenticationStore={authenticationStore}
-                            onError={error => onLoggingError(error)}
-                        />
-                        <LoginCallback
-                            path="/login-callback"
-                            authenticationStore={authenticationStore}
-                            onError={error => onLoggingError(error)}
-                        />
-                        <LoginError path="/login-error" />
-                    </Router>
+                    <Routes
+                        user={user}
+                        fetchWithUi={fetchWithUi}
+                        authenticationStore={authenticationStore}
+                        onLoggingError={onLoggingError}
+                    />
 
                     <LoginStatus
                         user={user}
                         login={provider => login(provider)}
-                        logout={() => logout()}
                     />
                 </Content>
                 <Footer>

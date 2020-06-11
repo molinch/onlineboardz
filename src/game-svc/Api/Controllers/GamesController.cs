@@ -14,29 +14,17 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class GamesController : ControllerBase
     {
-        private readonly IGameRepository _repository;
         private readonly IMediator _mediator;
 
-        public GamesController(IGameRepository repository, IMediator mediator)
+        public GamesController(IMediator mediator)
         {
-            _repository = repository;
             _mediator = mediator;
         }
 
         [HttpGet]
-        public Task<IEnumerable<Game>> Get()
+        public Task<IEnumerable<Game>> Get([FromQuery]IEnumerable<GameType> types, [FromQuery] IEnumerable<GameStatus> statuses)
         {
-            return _repository.GetAsync();
-        }
-
-        /// <summary>
-        /// Adds the current player to the waiting room
-        /// </summary>
-        [HttpPatch]
-        [Route("Metadata")]
-        public Task<Game> Update([Required]AddPlayerToGameProposalCommand command)
-        {
-            return _mediator.Send(command);
+            return _mediator.Send(new ListGamesQuery(types, statuses));
         }
     }
 }

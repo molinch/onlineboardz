@@ -32,21 +32,18 @@ namespace Api.Commands
         {
             private readonly PlayerIdentity _playerIdentity;
             private readonly IGameRepository _repository;
-            private readonly IOptions<GameOptions> _gameOptions;
+            private readonly GameAssert _gameAssert;
 
-            public CreateGameProposalCommandHandler(PlayerIdentity playerIdentity, IGameRepository repository, IOptions<GameOptions> gameOptions)
+            public CreateGameProposalCommandHandler(PlayerIdentity playerIdentity, IGameRepository repository, GameAssert gameAssert)
             {
                 _playerIdentity = playerIdentity;
                 _repository = repository;
-                _gameOptions = gameOptions;
+                _gameAssert = gameAssert;
             }
 
             public async Task<Game> Handle(CreateGameProposalCommand request, CancellationToken cancellationToken)
             {
-                if ((await _repository.GetNumberOfGamesAsync(_playerIdentity.Id)) >= _gameOptions.Value.MaxNumberOfGamesPerUser)
-                {
-                    throw new ValidationException("Maximum number of games reached");
-                }
+                await _gameAssert.NotTooManyOpenGamesAsync();
 
                 var game = new Game()
                 {

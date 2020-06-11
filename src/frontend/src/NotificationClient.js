@@ -17,6 +17,7 @@ class GameNotificationClient {
       
         const connection = new HubConnectionBuilder()
           .withUrl(`${config.GameServiceUri}/hubs/game`, options)
+          .withAutomaticReconnect()
           .build();
         await connection.start();
 

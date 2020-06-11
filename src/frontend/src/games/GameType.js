@@ -12,11 +12,11 @@ const GameType =
     FindSameAndTapIt: 4,
     FindStorytellerCard: 5,
     CardBattle: 6,
-    Scrabble: 7
+    Scrabble: 7,
 };
 Object.freeze(GameType);
 
-const GameTypeInfo = [
+const GameTypeInfos = [
     { type: GameType.Unknown, name: "Unknown", logo: notfound },
     { type: GameType.TicTacToe, name: "TicTacToe", logo: tictactoeLogo },
     { type: GameType.Memory, name: "Memory", logo: memoryLogo },
@@ -26,6 +26,12 @@ const GameTypeInfo = [
     { type: GameType.CardBattle, name: "CardBattle", logo: notfound },
     { type: GameType.Scrabble, name: "Scrabble", logo: notfound },
 ];
+Object.freeze(GameTypeInfos);
+
+const GameTypeInfo = {
+    ById: id => GameTypeInfos[id],
+    ByName: name => GameTypeInfos.find(g => g.name === name),
+};
 Object.freeze(GameTypeInfo);
 
 export { GameType, GameTypeInfo };

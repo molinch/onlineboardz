@@ -130,7 +130,7 @@ const TicTacToe = props => {
     }
 
     return (
-        <div className="game">
+        <div className="tictactoe">
             <div className="game-board">
                 <Board
                     squares={current.squares}

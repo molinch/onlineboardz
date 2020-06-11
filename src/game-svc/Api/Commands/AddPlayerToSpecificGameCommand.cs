@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -13,38 +14,35 @@ using System.Threading.Tasks;
 
 namespace Api.Commands
 {
-    public class AddPlayerToGameProposalCommand : IRequest<Game>
+    public class AddPlayerToSpecificGameCommand : IRequest<Game>
     {
         [JsonConstructor]
-        public AddPlayerToGameProposalCommand(string gameId)
+        public AddPlayerToSpecificGameCommand(string gameId)
         {
             GameId = gameId;
         }
 
         public string GameId { get; }
 
-        public class AddPlayerToGameProposalCommandHandler : IRequestHandler<AddPlayerToGameProposalCommand, Game>
+        public class AddPlayerToGameProposalCommandHandler : IRequestHandler<AddPlayerToSpecificGameCommand, Game>
         {
             private readonly PlayerIdentity _playerIdentity;
             private readonly IGameRepository _repository;
             private readonly IHubContext<GameHub> _gameHub;
-            private readonly IOptions<GameOptions> _gameOptions;
+            private readonly GameAssert _gameAssert;
 
             public AddPlayerToGameProposalCommandHandler(PlayerIdentity playerIdentity, IGameRepository repository,
-                IHubContext<GameHub> gameHub, IOptions<GameOptions> gameOptions)
+                IHubContext<GameHub> gameHub, GameAssert gameAssert)
             {
                 _playerIdentity = playerIdentity;
                 _repository = repository;
                 _gameHub = gameHub;
-                _gameOptions = gameOptions;
+                _gameAssert = gameAssert;
             }
 
-            public async Task<Game> Handle(AddPlayerToGameProposalCommand request, CancellationToken cancellationToken)
+            public async Task<Game> Handle(AddPlayerToSpecificGameCommand request, CancellationToken cancellationToken)
             {
-                if ((await _repository.GetNumberOfGamesAsync(_playerIdentity.Id)) >= _gameOptions.Value.MaxNumberOfGamesPerUser)
-                {
-                    throw new ValidationException("Maximum number of games reached");
-                }
+                await _gameAssert.NotTooManyOpenGamesAsync();
 
                 var waitingRoom = await _repository.AddPlayerIfNotThereAsync(request.GameId, new Game.GameMetadata.Player()
                 {

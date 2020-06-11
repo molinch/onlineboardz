@@ -1,6 +1,4 @@
-﻿using Api.Exceptions;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Api.Persistence
 {
@@ -10,7 +8,7 @@ namespace Api.Persistence
         TicTacToe = 1,
         Memory = 2,
         GooseGame = 3,
-        FindSameAndTapIt = 4, // if
+        FindSameAndTapIt = 4,
         FindStorytellerCard = 5, // storyteller gives a hint, then others should find it // https://unsplash.com/s/photos/random
         CardBattle,
         Scrabble

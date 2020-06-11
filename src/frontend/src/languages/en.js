@@ -13,6 +13,7 @@ const english = {
     "WelcomeUser": "Welcome {{userName}}",
     "About-Desc": "Online boardz is a brilliant idea, why seeing your friends when you can just stay home? Furthermore it's Covid friendly.",
     "Languages": "Languages",
+    "PlayGame": "Play {{game}}",
 
     "ChooseGame": "Choose a game",
     "TicTacToe": "Tic Tac Toe",

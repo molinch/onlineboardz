@@ -10,9 +10,10 @@ const french = {
     "Friends": "Amis",
     "Logout": "Déconnexion",
     "LoggedIn": "Connecté !",
-    "WelcomeUser": "Bienvenu {{userName}}",
+    "WelcomeUser": "Bienvenue {{userName}}",
     "About-Desc": "Online boardz est une idée brillante, why seeing your friends when you can just stay home? Furthermore it's Covid friendly.",
     "Languages": "Languages",
+    "PlayGame": "Jouer à {{game}}",
 
     "ChooseGame": "Choose a game",
     "TicTacToe": "Tic Tac Toe",

@@ -25,6 +25,7 @@ namespace Api.Persistence
             public TimeSpan MaxDuration { get; set; }
 
             // if we have a timeout then we could have a number of players between min/max, good idea? overkill?
+            // or initiator can always force to start the game once it's between min/max players
             public int MinPlayers { get; set; }
             public int MaxPlayers { get; set; }
             public int PlayersCount { get; set; }

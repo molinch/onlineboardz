@@ -40,6 +40,7 @@ namespace ApiTests.Persistence
 
             // The idea is that each test run gets his own fresh database (dropped during Dispose)
             // This way there is no state shared between the tests
+            // Note: seems like Mongo has an inmemory feature that we could leverage too
             _dbName = "GameDbTest-" + _random.Next();
             _mongoClientSettings = MongoClientSettings.FromConnectionString(_configuration.GetValue<string>("MongoConnectionString"));
             _repository = new GameRepository(
@@ -88,11 +89,60 @@ namespace ApiTests.Persistence
         [Fact]
         public async Task Should_get_games()
         {
-            var game1 = await _repository.CreateAsync(new Game());
-            var game2 = await _repository.CreateAsync(new Game());
+            var game1 = await _repository.CreateAsync(new Game()
+            {
+                Status = GameStatus.WaitingForPlayers,
+                Metadata = new Game.GameMetadata()
+                {
+                    GameType = GameType.GooseGame,
+                    Players = new List<Game.GameMetadata.Player>()
+                    {
+                        Einstein
+                    }
+                }
+            });
+            var game2 = await _repository.CreateAsync(new Game()
+            {
+                Status = GameStatus.WaitingForPlayers,
+                Metadata = new Game.GameMetadata()
+                {
+                    GameType = GameType.CardBattle,
+                    Players = new List<Game.GameMetadata.Player>()
+                    {
+                        Einstein
+                    }
+                }
+            });
+            var game3 = await _repository.CreateAsync(new Game()
+            {
+                Status = GameStatus.TimedOut, // should not be picked
+                Metadata = new Game.GameMetadata()
+                {
+                    GameType = GameType.CardBattle,
+                    Players = new List<Game.GameMetadata.Player>()
+                    {
+                        Einstein
+                    }
+                }
+            });
+            var game4 = await _repository.CreateAsync(new Game()
+            {
+                Status = GameStatus.WaitingForPlayers,
+                Metadata = new Game.GameMetadata()
+                {
+                    GameType = GameType.CardBattle,
+                    Players = new List<Game.GameMetadata.Player>()
+                    {
+                        Eiffel // should not be picked
+                    }
+                }
+            });
 
             // Act
-            var games = await _repository.GetAsync();
+            var games = await _repository.GetAsync(
+                Einstein.ID,
+                new[] { GameType.CardBattle, GameType.GooseGame },
+                new[] { GameStatus.WaitingForPlayers });
 
             games.Should().BeEquivalentTo(new[] { game1, game2 }, options => options
                 .Using<DateTime>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1)) // Mongo slightly changes the datetime
