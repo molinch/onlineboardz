@@ -5,10 +5,10 @@ import config from './config';
 import { GameTypeInfo } from './games/GameType';
 import { navigate } from '@reach/router';
 
-const PlayGame = props => {
+const PlayGame = ({ gameName, fetchWithUi }) => {
     const { t } = useTranslation();
     const [error, setError] = useState([]);
-    const gameInfo = GameTypeInfo.ByName(props.gameName);
+    const gameInfo = GameTypeInfo.ByName(gameName);
 
     /*
     useEffect(() => {
@@ -27,7 +27,7 @@ const PlayGame = props => {
 
     const join = () => {
         (async () => {
-            const response = await props.fetchWithUi.patch(
+            const response = await fetchWithUi.patch(
                 `${config.GameServiceUri}/gameProposals/joinAny`,
                 { gameType: gameInfo.type }
             );

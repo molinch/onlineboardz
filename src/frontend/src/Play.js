@@ -21,23 +21,23 @@ const Favorite = props =>
         "icon-favorite", "Favorite"
     );
 
-const Play = props => {
+const Play = ({ user, fetchWithUi }) => {
     const { t } = useTranslation();
     const [gameTypes, setGameTypes] = useState([]);
     const [error, setError] = useState(<></>);
 
     useEffect(() => {
-        if (!props.user) return;
+        if (!user) return;
 
         (async () => {
-            const response = await props.fetchWithUi.get(`${config.GameServiceUri}/gameTypes/`);
+            const response = await fetchWithUi.get(`${config.GameServiceUri}/gameTypes/`);
             if (response.error) {
                 setError(response.error);
                 return;
             }
             setGameTypes(response);
         })();
-    }, [props]);
+    }, [user, fetchWithUi]);
 
     const onGameChosen = gameTypeInfo => {
         navigate(`/play/${gameTypeInfo.name}`);

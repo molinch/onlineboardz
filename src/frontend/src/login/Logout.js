@@ -1,18 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { navigate } from '@reach/router';
-import { useRunOnce } from '../CustomHooks';
 
-const Logout = props => {
-    useRunOnce(() => {
+const Logout = ({ authenticationStore, onError }) => {
+    useEffect(() => {
         (async () => {
             try {
-                await props.authenticationStore.completeLogout();
+                await authenticationStore.completeLogout();
                 navigate("/");
             } catch (error) {
-                props.onError(error);
+                onError(error);
             }
         })();
-    });
+    }, [authenticationStore, onError]);
 
     return (<></>);
 };

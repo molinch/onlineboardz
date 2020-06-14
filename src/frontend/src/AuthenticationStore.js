@@ -55,11 +55,11 @@ class AuthenticationStore {
         })();
     }
  
-    isLoggedIn() {
+    isLoggedIn = () => {
         return this.user != null && this.user.access_token && !this.user.expired;
     }
  
-    async getStateData(stateId) {
+    getStateData = async stateId => {
         try {
             return await this.userStore.get(stateId);
         } catch (error) {
@@ -67,7 +67,7 @@ class AuthenticationStore {
         }
     }
 
-    async loadUser() {
+    loadUser = async () => {
         try {
             this.user = await this.manager.getUser();
         } catch (error) {
@@ -75,7 +75,7 @@ class AuthenticationStore {
         }
     }
  
-    async login(data) {
+    login = async data => {
         try {
             await this.manager.clearStaleState();
             await this.manager.signinRedirect(data);
@@ -84,19 +84,21 @@ class AuthenticationStore {
         }
     }
  
-    async completeLogin() {
+    completeLogin = async () => {
         try {
+            debugger;
             this.user = await this.manager.signinRedirectCallback();
 
             if (this.isLoggedIn()) {
                 this.onLogged(this.user);
             }
         } catch (error) {
+            debugger;
             this.onError(error);
         }
     }
  
-    async logout() {
+    logout = async () => {
         try {
             await this.manager.signoutRedirect()
         } catch (error) {

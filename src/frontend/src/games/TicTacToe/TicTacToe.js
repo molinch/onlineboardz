@@ -2,23 +2,23 @@ import React, { useState } from 'react';
 import './TicTacToe.css';
 import { useTranslation } from 'react-i18next';
 
-const Square = props => {
+const Square = ({ value, onClick }) => {
     return (
         <button
             className="square"
-            onClick={props.onClick}
+            onClick={onClick}
         >
-            {props.value}
+            {value}
         </button>
     );
 };
 
-const Board = props => {
+const Board = ({ squares, onClick }) => {
     const renderSquare = i => {
         return (
             <Square
-                value={props.squares[i]}
-                onClick={() => props.onClick(i)}
+                value={squares[i]}
+                onClick={() => onClick(i)}
             />
         );
     };
@@ -44,7 +44,7 @@ const Board = props => {
     );
 }
 
-const TicTacToe = props => {
+const TicTacToe = () => {
     const { t } = useTranslation();
     const [state, setState] = useState({
         history: [{

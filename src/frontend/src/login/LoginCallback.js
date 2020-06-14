@@ -1,16 +1,16 @@
-import React from 'react';
-import { useRunOnce } from '../CustomHooks';
+import React, { useEffect } from 'react';
 
-const LoginCallback = props => {
-    useRunOnce(() => {
+const LoginCallback = ({ authenticationStore, onError }) => {
+    useEffect(() => {
         (async () => {
+            debugger;
             try {
-                await props.authenticationStore.completeLogin();
+                await authenticationStore.completeLogin();
             } catch (error) {
-                props.onError(error);
+                onError(error);
             }
         })();
-    });
+    }, [authenticationStore, onError]);
 
     return (<div></div>);
 }

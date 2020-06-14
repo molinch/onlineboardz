@@ -2,9 +2,8 @@ import React from 'react';
 import { Button } from 'antd';
 import { Trans, useTranslation } from 'react-i18next';
 
-const LoginStatus = props => {
+const LoginStatus = ({ user, login }) => {
     const { t } = useTranslation();
-    const user = props.user;
     if (user) {
         return (
             <div className="loggedIn">
@@ -21,8 +20,8 @@ const LoginStatus = props => {
     return (
         <div>
             Sign-in
-            <Button onClick={() => props.login("google")}>Google</Button>
-            <Button onClick={() => props.login("facebook")}>Facebook</Button>
+            <Button onClick={() => login("google")}>Google</Button>
+            <Button onClick={() => login("facebook")}>Facebook</Button>
         </div>
     );
 }
