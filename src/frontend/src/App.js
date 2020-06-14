@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, navigate } from "@reach/router";
 import LoginStatus from './login/LoginStatus';
 import AuthenticationStore from './AuthenticationStore';
@@ -16,47 +16,53 @@ import FetchWithUIFeedback from './FetchWithUIFeedback';
 const { Header, Content, Footer } = Layout;
 const { SubMenu } = Menu;
 
+const onLoggingError = error => {
+    const errorText = encodeURIComponent(error);
+    navigate("/login-error?errorText=" + errorText);
+}
+
 function App() {
-    const onLogged = async user => {
-        if (window.location.href.includes("login") || window.location.href.includes("logout")) {
-            navigate('/');
+    console.log('Render App');
+
+    const gameNotificationClient = useCreateOnce(() => new GameNotificationClient());
+    const [user, setUser] = useState(null);
+    const { t } = useTranslation();
+
+    const authenticationStore = useCreateOnce(() => new AuthenticationStore(
+        onLoggingError,
+        
+        async user => {
+            if (window.location.href.includes("login") || window.location.href.includes("logout")) {
+                navigate('/');
+            }
+
+            setUser({
+                name: user.profile.name,
+                email: user.profile.email,
+                picture: user.profile.picture,
+            });
+
+            await gameNotificationClient.load(user.access_token);
         }
+    ));
 
-        setUser({
-            name: user.profile.name,
-            email: user.profile.email,
-            picture: user.profile.picture,
-        });
-
-        await gameNotificationClient.load(user.access_token);
-    }
-
-    const onLoggingError = error => {
-        const errorText = encodeURIComponent(error);
-        navigate("/login-error?errorText=" + errorText);
-    }
-
-    const login = async provider => {
+    const login = useCallback(async provider => {
         await authenticationStore.login({
             data: { provider: provider }
         });
-    }
+    }, [authenticationStore]);
 
     const logout = async () => {
         if (!user) return;
         setUser(null);
         await authenticationStore.logout();
-    }
-
-    const [user, setUser] = useState(null);
-    const { t } = useTranslation();
-    const authenticationStore = useCreateOnce(() => new AuthenticationStore(onLoggingError, onLogged));
-    const gameNotificationClient = useCreateOnce(() => new GameNotificationClient());
+    };
+   
     const fetchWithUi = new FetchWithUIFeedback(() => authenticationStore?.user?.access_token);
 
     const switchLanguage = lng => {
         i18n.changeLanguage(lng);
-    }
+    };
 
     const languageSelector = (
         <SubMenu key="language" title={t("Languages")} style={{ float: 'right' }}>

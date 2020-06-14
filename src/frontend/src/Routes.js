@@ -26,6 +26,7 @@ const Routes = ({ user, fetchWithUi, authenticationStore, onLoggingError }) => (
             path="/login-callback"
             authenticationStore={authenticationStore}
             onError={error => onLoggingError(error)}
+            user={user}
         />
         <LoginError path="/login-error" />
     </Router>

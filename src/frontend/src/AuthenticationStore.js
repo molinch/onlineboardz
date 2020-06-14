@@ -86,7 +86,6 @@ class AuthenticationStore {
  
     completeLogin = async () => {
         try {
-            debugger;
             this.user = await this.manager.signinRedirectCallback();
 
             if (this.isLoggedIn()) {

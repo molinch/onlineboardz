@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
 
-const LoginCallback = ({ authenticationStore, onError }) => {
+const LoginCallback = ({ authenticationStore, onError, user }) => {
     useEffect(() => {
         (async () => {
-            debugger;
+            if (user) return;
+
             try {
                 await authenticationStore.completeLogin();
             } catch (error) {
                 onError(error);
             }
         })();
-    }, [authenticationStore, onError]);
+    }, [authenticationStore, onError, user]);
 
     return (<div></div>);
 }
