@@ -7,12 +7,12 @@ import AuthenticatedFetch from './AuthenticatedFetch';
 
 class FetchWithUIFeedback {
     constructor(getAccessToken) {
-        this.authFetch = new AuthenticatedFetch(getAccessToken);
-        this.errorCount = 0;
-        this.errorHandler = {
+        this._authFetch = new AuthenticatedFetch(getAccessToken);
+        this._errorCount = 0;
+        this._errorHandler = {
             validation: title => ({
                 error: (
-                    <Alert key={`warning-${this.errorCount++}`}
+                    <Alert key={`warning-${this._errorCount++}`}
                         message="Warning" type="warning" showIcon closable
                         description={title} 
                     />
@@ -20,7 +20,7 @@ class FetchWithUIFeedback {
             }),
             server: () => ({
                 error: (
-                    <Alert key={`server-error-${this.errorCount++}`}
+                    <Alert key={`server-error-${this._errorCount++}`}
                         message="Error" type="error" showIcon closable 
                         description="A server error occured please try again later"
                     />
@@ -28,7 +28,7 @@ class FetchWithUIFeedback {
             }),
             general: () => ({
                 error: (
-                    <Alert key={`general-error-${this.errorCount++}`}
+                    <Alert key={`general-error-${this._errorCount++}`}
                         message="Error" type="error" showIcon closable
                         description="An error occured, make sure you are connected to network/internet"
                     />
@@ -37,15 +37,15 @@ class FetchWithUIFeedback {
         };
     }
 
-    get = uri => this.authFetch.get(uri, this.errorHandler)
+    get = uri => this._authFetch.get(uri, this._errorHandler)
 
-    post = (uri, data) => this.authFetch.post(uri, data, this.errorHandler)
+    post = (uri, data) => this._authFetch.post(uri, data, this._errorHandler)
 
-    patch = (uri, data) => this.authFetch.patch(uri, data, this.errorHandler)
+    patch = (uri, data) => this._authFetch.patch(uri, data, this._errorHandler)
 
-    put = (uri, data) => this.authFetch.put(uri, data, this.errorHandler)
+    put = (uri, data) => this._authFetch.put(uri, data, this._errorHandler)
 
-    delete = uri => this.authFetch.post(uri, this.errorHandler)
+    delete = uri => this._authFetch.post(uri, this._errorHandler)
 }
 
 export default FetchWithUIFeedback;

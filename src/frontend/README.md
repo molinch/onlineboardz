@@ -1,4 +1,14 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Third party libraries used
+
+- Default configuration is done by Create react app and overriden to support additional babel plugins: https://devinschulz.com/modify-create-react-apps-babel-configuration-without-ejecting/
+- React
+- Reach Router, like React Router but with a better API (both projects will merge and React router will keep React API)
+- i18nNext, for translations
+- SignalR, for WebSocket notifications from the server
+- Antd, provides many UI components and easily usable with React (competes with MaterialUI)
+- Oidc client, OpenID connect/oAuth2 client
+- WatermelonDb, Observable wrapper for IndexedDB (which is rather complex to use by default)
+
 
 ## Available Scripts
 

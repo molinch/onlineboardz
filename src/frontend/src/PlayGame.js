@@ -59,21 +59,10 @@ const PlayGame = ({ gameName, fetchWithUi }) => {
                 <Trans i18nKey="PlayGame">
                     Play {{game: t(gameInfo.name)}}
                 </Trans>
-
-                <Button onClick={join}>
-                    Join an existing game
-                </Button>
-
-                (see game preferences)
-
-                OR
-
-                <Button onClick={create}>
-                    Create a new game, that your friends or others can join
-                </Button>
-                
-
             </h1>
+            <div>Game options</div>
+            <div>Players: </div>
+            <div>Duration: {}</div>
         </div>
     );
 };

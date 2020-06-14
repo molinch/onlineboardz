@@ -4,9 +4,13 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import './languages/i18n';
+import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider'
+import { gameDatabase } from './GameDatabase';
 
 ReactDOM.render(
-    <App />,
+    <DatabaseProvider database={gameDatabase}>
+        <App />
+    </DatabaseProvider>,
 
     //<React.StrictMode>
     //  <App />

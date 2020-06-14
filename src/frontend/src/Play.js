@@ -4,7 +4,7 @@ import { HeartOutlined, HeartFilled, SmileOutlined, SmileFilled } from '@ant-des
 import CardIcon from './CardIcon';
 import { GameTypeInfo } from './games/GameType';
 import { useTranslation } from 'react-i18next';
-import config from './config';
+import useGameData from './GameData';
 import { navigate } from "@reach/router";
 
 const { Meta } = Card;
@@ -25,19 +25,20 @@ const Play = ({ user, fetchWithUi }) => {
     const { t } = useTranslation();
     const [gameTypes, setGameTypes] = useState([]);
     const [error, setError] = useState(<></>);
+    const gameData = useGameData(fetchWithUi);
 
     useEffect(() => {
         if (!user) return;
 
         (async () => {
-            const response = await fetchWithUi.get(`${config.GameServiceUri}/gameTypes/`);
+            const response = await gameData.getGameTypes();
             if (response.error) {
                 setError(response.error);
                 return;
             }
             setGameTypes(response);
         })();
-    }, [user, fetchWithUi]);
+    }, [user, gameData]);
 
     const onGameChosen = gameTypeInfo => {
         navigate(`/play/${gameTypeInfo.name}`);
