@@ -62,7 +62,7 @@ class AuthenticatedFetch {
                 console.log(result);
                 return errorHandler.validation(result.title);
             } else if (status >= 500) {
-                console.log('An server error occured while fetching');
+                console.log('A server error occured while fetching');
                 console.log(result);
                 return errorHandler.server();
             } else {

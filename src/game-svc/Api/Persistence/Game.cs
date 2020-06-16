@@ -12,6 +12,9 @@ namespace Api.Persistence
 
         public GameMetadata Metadata { get; set; } = null!;
 
+        public DateTime? StartedAt { get; set; }
+        public DateTime? EndedAt { get; set; }
+
         public class GameMetadata
         {
             public int SchemaVersion { get; set; }
@@ -19,10 +22,10 @@ namespace Api.Persistence
             public GameType GameType { get; set; }
 
             /// <summary>
-            /// If greater than 0, specified the maximum time this game may take.
+            /// If greater than 0, specified the maximum time in minutes this game may take.
             /// The game status will change to TimedOut once that duration has been hit.
             /// </summary>
-            public TimeSpan MaxDuration { get; set; }
+            public int MaxDuration { get; set; }
 
             // if we have a timeout then we could have a number of players between min/max, good idea? overkill?
             // or initiator can always force to start the game once it's between min/max players

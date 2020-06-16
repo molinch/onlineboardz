@@ -1,6 +1,7 @@
 ﻿using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using MongoDB.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,9 +26,9 @@ namespace Api.Persistence
                 .ToListAsync();
         }
 
-        public Task<Game> GetAsync(string id)
+        public async Task<Game?> GetAsync(string id)
         {
-            return _database.Find<Game>().OneAsync(id);
+            return await _database.Find<Game>().OneAsync(id);
         }
 
         public Task<int> GetNumberOfGamesAsync(string playerId)
@@ -44,28 +45,47 @@ namespace Api.Persistence
             return game;
         }
 
-        public Task<Game> AddPlayerIfNotThereAsync(string id, Game.GameMetadata.Player player)
+        public async Task<Game?> AddPlayerIfNotThereAsync(string id, Game.GameMetadata.Player player)
         {
-            return _database.UpdateAndGet<Game>()
+            var game = await _database.UpdateAndGet<Game>()
                 .Match(g => g.ID == id && !g.Metadata.Players.Any(p => p.ID == player.ID) && g.Status == GameStatus.WaitingForPlayers)
                 .Modify(g => g.Push(g => g.Metadata.Players, player))
                 .Modify(g => g.Inc(g => g.Metadata.PlayersCount, 1))
                 .ExecuteAsync();
+            return game;
         }
 
-        public Task<Game> AddPlayerToGameAsync(GameType gameType, Game.GameMetadata.Player player)
+        public async Task<Game?> AddPlayerToGameAsync(GameType gameType, int? maxPlayers, int? duration, Game.GameMetadata.Player player)
         {
-            return _database.UpdateAndGet<Game>()
-                .Match(g => g.Metadata.GameType == gameType && !g.Metadata.Players.Any(p => p.ID == player.ID) && g.Status == GameStatus.WaitingForPlayers)
+            var match = _database.UpdateAndGet<Game>()
+                .Match(g =>
+                    g.Metadata.GameType == gameType &&
+                    !g.Metadata.Players.Any(p => p.ID == player.ID) &&
+                    g.Status == GameStatus.WaitingForPlayers);
+
+            if (maxPlayers.HasValue)
+            {
+                match = match.Match(g => g.Metadata.MaxPlayers <= maxPlayers);
+            }
+
+            if (duration.HasValue)
+            {
+                match = match.Match(g => g.Metadata.MaxDuration <= duration);
+            }
+
+            var game = await match
                 .Modify(g => g.Push(g => g.Metadata.Players, player))
                 .Modify(g => g.Inc(g => g.Metadata.PlayersCount, 1))
                 .ExecuteAsync();
+
+            return game;
         }
 
-        public Task<Game> SetGameStatusAsync(string id, GameStatus oldStatus, GameStatus newStatus) =>
-            _database.UpdateAndGet<Game>()
+        public async Task<Game?> SetGameStatusAsync(string id, GameStatus oldStatus, GameStatus newStatus) =>
+            await _database.UpdateAndGet<Game>()
                 .Match(g => g.ID == id && g.Status == oldStatus)
                 .Modify(g => g.Status, newStatus)
+                .Modify(g => g.StartedAt, DateTime.UtcNow)
                 .ExecuteAsync();
 
         public async Task RemoveAsync(string id) =>

@@ -14,7 +14,7 @@ namespace Api.Controllers
         public IEnumerable<GameTypeMetadata> Get()
         {
             // returns the type of game that are enabled, and in which order they should be proposed in the UI
-            return GameTypeMetadata.All;
+            return GameTypeMetadata.All.Values;
         }
     }
 }

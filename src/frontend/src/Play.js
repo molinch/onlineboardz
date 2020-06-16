@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from 'antd';
+import { Card, Modal, InputNumber, Switch } from 'antd';
 import { HeartOutlined, HeartFilled, SmileOutlined, SmileFilled } from '@ant-design/icons';
 import CardIcon from './CardIcon';
 import { GameTypeInfo } from './games/GameType';
 import { useTranslation } from 'react-i18next';
-import useGameData from './GameData';
+import getGameData from './games/GameData';
 import { navigate } from "@reach/router";
+import config from './config';
 
 const { Meta } = Card;
 const ChooseGame = props =>
@@ -21,16 +22,19 @@ const Favorite = props =>
         "icon-favorite", "Favorite"
     );
 
+const defaultGameOptions = { hasMaxPlayers: false, maxPlayers: null, specificDuration: false, duration: null, isOpen: true };
+
 const Play = ({ user, fetchWithUi }) => {
     const { t } = useTranslation();
     const [gameTypes, setGameTypes] = useState([]);
     const [error, setError] = useState(<></>);
-    const gameData = useGameData(fetchWithUi);
-
+    const [selectedGame, setSelectedGame] = useState(null);
+    const [gameOptions, setGameOptions] = useState(defaultGameOptions);
     useEffect(() => {
         if (!user) return;
 
         (async () => {
+            const gameData = getGameData(fetchWithUi);
             const response = await gameData.getGameTypes();
             if (response.error) {
                 setError(response.error);
@@ -38,16 +42,139 @@ const Play = ({ user, fetchWithUi }) => {
             }
             setGameTypes(response);
         })();
-    }, [user, gameData]);
+    }, [user, fetchWithUi]);
 
-    const onGameChosen = gameTypeInfo => {
-        navigate(`/play/${gameTypeInfo.name}`);
+    const onGameChosen = (gameType, gameTypeInfo) => {
+        setSelectedGame({ gameType, gameTypeInfo });
     }
 
     const onFavorite = gameTypeInfo => {
-
+        /*
+        const response = await fetchWithUi.put(
+            `${config.GameServiceUri}/favorites`,
+            { gameType: selectedGame.type, players: numberOfPlayers, duration }
+        );
+        */
     }
 
+    const confirmPlay = async () => {
+        const response = await fetchWithUi.patch(
+            `${config.GameServiceUri}/gameProposals/joinAny`,
+            {
+                gameType: selectedGame.gameType.gameType,
+                maxPlayers: gameOptions.hasMaxPlayers ? gameOptions.maxPlayers : null,
+                duration: gameOptions.specificDuration ? gameOptions.duration : null,
+                isOpen: gameOptions.isOpen,
+            }
+        );
+        if (response.error) {
+            setError(response.error);
+            reset();
+            return;
+        }
+        
+        const gameTypeInfo = GameTypeInfo.ById(response.metadata.gameType);
+        navigate(`/games/${gameTypeInfo.name}/${response.id}`);
+        reset();
+    }
+
+    const cancelPlay = () => {
+        reset();
+    }
+
+    const reset = () => {
+        setSelectedGame(null);
+        setGameOptions(defaultGameOptions);
+    };
+
+    let playModalContent = (<></>);
+    const gameType = selectedGame?.gameType;
+    if (gameType) {
+        let players = (
+            <div>
+                Number of players:
+                {gameType.minPlayers}
+            </div>
+        );
+        if (gameType.minPlayers !== gameType.maxPlayers) {
+            const playersSwitch = gameOptions.hasMaxPlayers
+                ?
+                    (
+                        <>
+                        I want at most 
+                        <InputNumber
+                            min={gameType.minPlayers}
+                            max={gameType.maxPlayers}
+                            defaultValue={gameType.minPlayers}
+                            onChange={p => setGameOptions({...gameOptions, maxPlayers: p})}
+                        />
+                        players
+                        </>
+                    )
+                :
+                    (
+                        <>
+                        Number of players doesn't matter
+                        </>
+                    );
+
+            players = 
+                (
+                    <div>
+                        <Switch
+                            onChange={o => setGameOptions({...gameOptions, hasMaxPlayers: o})}
+                        /> 
+                        {playersSwitch}
+                    </div>
+                );
+        }
+
+        const specificDuration = gameOptions.specificDuration
+            ?
+                (
+                    <>
+                    Duration matters, maximum duration is 
+                    <InputNumber 
+                        min={Math.trunc(gameType.defaultDuration/2)} 
+                        max={gameType.defaultDuration*2} 
+                        defaultValue={gameType.defaultDuration} 
+                        onChange={d => setGameOptions({...gameOptions, duration: d})}
+                    />
+                    </>
+                )
+            : (<>Duration doesn't matter</>);
+        const duration = (
+            <div>
+                <Switch
+                    onChange={o => setGameOptions({...gameOptions, specificDuration: o})}
+                /> 
+                {specificDuration}
+            </div>
+        );
+
+        const openSwitchText = gameOptions.isOpen
+            ? "Game is open to anyone"
+            : "Game is private";
+        const open = (
+            <div>
+                <Switch
+                    defaultChecked
+                    onChange={o => setGameOptions({...gameOptions, isOpen: o})}
+                /> 
+                {openSwitchText}
+            </div>
+        );
+
+        playModalContent = (
+            <>
+            <h3>Game options:</h3>
+            {players}
+            {duration}
+            {open}
+            </>
+        );
+    }
+    const playModalVisible = selectedGame !== null;
     return (
         <div>
             <h1>{t('ChooseGame')}</h1>
@@ -67,7 +194,7 @@ const Play = ({ user, fetchWithUi }) => {
                                 />
                             }
                             actions={[
-                                <ChooseGame onClick={() => onGameChosen(gameTypeInfo)} />,
+                                <ChooseGame onClick={() => onGameChosen(g, gameTypeInfo)} />,
                                 <Favorite onClick={() => onFavorite(gameTypeInfo)} />
                             ]}
                         >
@@ -79,6 +206,16 @@ const Play = ({ user, fetchWithUi }) => {
                     );
                 })}
             </div>
+
+            <Modal
+                title={t(selectedGame?.gameTypeInfo?.name)}
+                visible={playModalVisible}
+                onOk={confirmPlay}
+                onCancel={cancelPlay}
+            >
+                {playModalContent}
+            </Modal>
+
         </div>
     );
 }

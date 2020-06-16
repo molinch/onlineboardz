@@ -21,19 +21,10 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Creates a waiting room/game that includes the current player
-        /// </summary>
-        [HttpPost]
-        public Task<Game> Create([Required]CreateGameProposalCommand command)
-        {
-            return _mediator.Send(command);
-        }
-
-        /// <summary>
         /// Adds the current player to the specifig waiting room/game
         /// </summary>
         [HttpPatch("join")]
-        public Task<Game> Update([Required]AddPlayerToSpecificGameCommand command)
+        public Task<Game> Update([Required][FromBody] AddPlayerToSpecificGameCommand command)
         {
             return _mediator.Send(command);
         }
@@ -42,7 +33,7 @@ namespace Api.Controllers
         /// Adds the current player to any waiting room/game that matches
         /// </summary>
         [HttpPatch("joinAny")]
-        public Task<Game> Update([Required][FromBody] AddPlayerToAnyGameCommand command)
+        public Task<Game> Update([Required][FromBody] JoinAnyGameCommand command)
         {
             return _mediator.Send(command);
         }

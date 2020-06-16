@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Api.Persistence
 {
@@ -24,7 +25,7 @@ namespace Api.Persistence
         public static readonly GameTypeMetadata CardBattle = new GameTypeMetadata(GameType.CardBattle, 2, 2, 15);
         public static readonly GameTypeMetadata Scrabble = new GameTypeMetadata(GameType.Scrabble, 2, 2, 20);
 
-        public static readonly IEnumerable<GameTypeMetadata> All = new[]
+        public static readonly IReadOnlyDictionary<GameType, GameTypeMetadata> All = new[]
         {
             TicTacToe,
             Memory,
@@ -33,7 +34,7 @@ namespace Api.Persistence
             FindStorytellerCard,
             CardBattle,
             Scrabble
-        };
+        }.ToDictionary(g => g.GameType, g => g);
 
         public GameTypeMetadata(GameType gameType, int minPlayers, int maxPlayers, int defaultDuration)
         {

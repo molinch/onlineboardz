@@ -7,14 +7,12 @@ import LoginCallback from './login/LoginCallback';
 import LoginError from './login/LoginError';
 import TicTacToe from './games/TicTacToe/TicTacToe';
 import Play from './Play';
-import PlayGame from './PlayGame'
 
 const Routes = ({ user, fetchWithUi, authenticationStore, onLoggingError }) => (
     <Router>
         <Home path="/" />
         <About path="/about" />
         <Play path="/play" user={user} fetchWithUi={fetchWithUi} />
-        <PlayGame path="/play/:gameName" user={user} fetchWithUi={fetchWithUi} />
         <TicTacToe path="/games/TicTacToe/:gameId" />
 
         <Logout

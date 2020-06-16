@@ -7,7 +7,7 @@
 - SignalR, for WebSocket notifications from the server
 - Antd, provides many UI components and easily usable with React (competes with MaterialUI)
 - Oidc client, OpenID connect/oAuth2 client
-- WatermelonDb, Observable wrapper for IndexedDB (which is rather complex to use by default)
+- localForage, simple key/value store that offers promises and is built on top of IndexedDb, WebSQL, or localStorage
 
 
 ## Available Scripts
