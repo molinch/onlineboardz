@@ -4,9 +4,12 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import './languages/i18n';
+import { LocationProvider } from "@reach/router";
 
 ReactDOM.render(
-    <App />,
+    <LocationProvider>
+        <App />
+    </LocationProvider>,
 
     //<React.StrictMode>
     //  <App />

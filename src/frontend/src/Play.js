@@ -3,7 +3,7 @@ import { Card, Modal, InputNumber, Switch } from 'antd';
 import { HeartOutlined, HeartFilled, SmileOutlined, SmileFilled } from '@ant-design/icons';
 import CardIcon from './CardIcon';
 import { GameTypeInfo } from './games/GameType';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import getGameData from './games/GameData';
 import { navigate } from "@reach/router";
 import config from './config';
@@ -92,7 +92,7 @@ const Play = ({ user, fetchWithUi }) => {
     if (gameType) {
         let players = (
             <div>
-                Number of players:
+                {t("NumberOfPlayers")}
                 {gameType.minPlayers}
             </div>
         );
@@ -100,30 +100,30 @@ const Play = ({ user, fetchWithUi }) => {
             const playersSwitch = gameOptions.hasMaxPlayers
                 ?
                     (
-                        <>
-                        I want at most 
-                        <InputNumber
-                            min={gameType.minPlayers}
-                            max={gameType.maxPlayers}
-                            defaultValue={gameType.minPlayers}
-                            onChange={p => setGameOptions({...gameOptions, maxPlayers: p})}
-                        />
-                        players
-                        </>
+                        <div>
+                            {t("GameOptionAtMostPlayersStart")}
+                            <InputNumber
+                                min={gameType.minPlayers}
+                                max={gameType.maxPlayers}
+                                defaultValue={gameType.minPlayers}
+                                onChange={p => setGameOptions({...gameOptions, maxPlayers: p})}
+                            />
+                            {t("GameOptionAtMostPlayersEnd")}
+                        </div>
                     )
                 :
                     (
-                        <>
-                        Number of players doesn't matter
-                        </>
+                        <></>
                     );
 
             players = 
                 (
                     <div>
                         <Switch
-                            onChange={o => setGameOptions({...gameOptions, hasMaxPlayers: o})}
-                        /> 
+                            defaultChecked
+                            onChange={o => setGameOptions({...gameOptions, hasMaxPlayers: !o})}
+                        />
+                        {t("GameOptionPlayer")}
                         {playersSwitch}
                     </div>
                 );
@@ -132,42 +132,42 @@ const Play = ({ user, fetchWithUi }) => {
         const specificDuration = gameOptions.specificDuration
             ?
                 (
-                    <>
-                    Duration matters, maximum duration is 
-                    <InputNumber 
-                        min={Math.trunc(gameType.defaultDuration/2)} 
-                        max={gameType.defaultDuration*2} 
-                        defaultValue={gameType.defaultDuration} 
-                        onChange={d => setGameOptions({...gameOptions, duration: d})}
-                    />
-                    </>
+                    <div>
+                        {t("GameOptionAtMostDurationStart")}
+                        <InputNumber 
+                            min={Math.trunc(gameType.defaultDuration/2)} 
+                            max={gameType.defaultDuration*2} 
+                            defaultValue={gameType.defaultDuration} 
+                            onChange={d => setGameOptions({...gameOptions, duration: d})}
+                        />
+                        {t("GameOptionAtMostDurationEnd")}
+                    </div>
                 )
-            : (<>Duration doesn't matter</>);
+            : (<></>);
         const duration = (
             <div>
                 <Switch
-                    onChange={o => setGameOptions({...gameOptions, specificDuration: o})}
-                /> 
+                    defaultChecked
+                    onChange={o => setGameOptions({...gameOptions, specificDuration: !o})}
+                />
+                {t("GameOptionDuration")}
                 {specificDuration}
             </div>
         );
 
-        const openSwitchText = gameOptions.isOpen
-            ? "Game is open to anyone"
-            : "Game is private";
         const open = (
             <div>
                 <Switch
                     defaultChecked
                     onChange={o => setGameOptions({...gameOptions, isOpen: o})}
                 /> 
-                {openSwitchText}
+                {t("GameOptionIsOpen")}
             </div>
         );
 
         playModalContent = (
             <>
-            <h3>Game options:</h3>
+            <h3>{t("GameOptions")}</h3>
             {players}
             {duration}
             {open}

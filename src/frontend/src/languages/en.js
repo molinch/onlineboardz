@@ -14,6 +14,8 @@ const english = {
     "About-Desc": "Online boardz is a brilliant idea, why seeing your friends when you can just stay home? Furthermore it's Covid friendly.",
     "Languages": "Languages",
     "PlayGame": "Play {{game}}",
+    "SignIn": "Sign-in",
+    "MyGames": "My games",
 
     "ChooseGame": "Choose a game",
     "TicTacToe": "Tic Tac Toe",
@@ -37,6 +39,16 @@ const english = {
     "TicTacToe_BackToMoveNr": "Back to move n°",
 
     "OopsLoginError": "Oops an error occured during login...",
+
+    "NumberOfPlayers": "Number of players:",
+    "GameOptions": "Game options:",
+    "GameOptionPlayer": "Number of players doesn't matter",
+    "GameOptionAtMostPlayersStart": "I want at most ",
+    "GameOptionAtMostPlayersEnd": "players",
+    "GameOptionIsOpen": "Game is open to anyone",
+    "GameOptionDuration": "Duration doesn't matter",
+    "GameOptionAtMostDurationStart": "Duration matters, maximum duration is ",
+    "GameOptionAtMostDurationEnd": "minutes",
 }
 
 export default english;

@@ -1,50 +1,70 @@
 @media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.ant-layout-sider {
+    overflow: auto;
+    height: 100vh;
+    position: fixed !important;
+    left: 0;
+}
+
+.userName {
+    margin-left: 2%;
+}
+
+.site-layout {
+    margin-left: 200px;
 }
 
 .ant-layout-content {
-  background-color: #fff;
+    background-color: #fff;
+    padding: 5%;
 }
 
 .ant-layout-footer {
-  text-align: 'center';
+    text-align: 'center';
 }
 
 .seek-cards .ant-card-bordered {
-  margin-left: auto;
-  margin-right: auto;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .ant-card-bordered {
-  border: 1px solid #ddd;
+    border: 1px solid #ddd;
 }
 
 .ant-card-actions .anticon {
-  font-size: 24px !important;
+    font-size: 24px !important;
 }
+
 .icon-text .text {
-  display: block;
+    display: block;
 }
+
 .ant-card-actions .icon-join:hover {
-  color: orangered;
+    color: orangered;
 }
+
 .ant-card-actions .icon-favorite:hover {
-  color: #eb2f96;
+    color: #eb2f96;
 }
 
 .seek-cards .ant-card {
-    float: left; /* layout ain't that great with the float since cards can have different heights... */
+    float: left;
+    /* layout ain't that great with the float since cards can have different heights... */
     margin: 0 10px 0 10px;
 }
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './TicTacToe.css';
 import { useTranslation } from 'react-i18next';
+import Chat from '../Chat';
 
 const Square = ({ value, onClick }) => {
     return (
@@ -145,4 +146,17 @@ const TicTacToe = () => {
     );
 }
 
-export default TicTacToe;
+const TicTacToeGame = () => {
+    return (
+        <>
+            <div style={{float: 'left', width: '70%', backgroundColor: 'lightblue'}}>
+                <TicTacToe />
+            </div>
+            <div style={{float: 'right', width: '30%', backgroundColor: '#aaa'}}>
+                <Chat></Chat>
+            </div>
+        </>
+    );
+}
+
+export default TicTacToeGame;

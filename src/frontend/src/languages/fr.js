@@ -14,6 +14,8 @@ const french = {
     "About-Desc": "Online boardz est une idée brillante, why seeing your friends when you can just stay home? Furthermore it's Covid friendly.",
     "Languages": "Languages",
     "PlayGame": "Jouer à {{game}}",
+    "SignIn": "Se connecter",
+    "MyGames": "Mes parties",
 
     "ChooseGame": "Choose a game",
     "TicTacToe": "Tic Tac Toe",

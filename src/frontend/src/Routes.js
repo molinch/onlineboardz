@@ -5,7 +5,7 @@ import About from './About';
 import Logout from './login/Logout';
 import LoginCallback from './login/LoginCallback';
 import LoginError from './login/LoginError';
-import TicTacToe from './games/TicTacToe/TicTacToe';
+import TicTacToeGame from './games/TicTacToe/TicTacToe';
 import Play from './Play';
 
 const Routes = ({ user, fetchWithUi, authenticationStore, onLoggingError }) => (
@@ -13,7 +13,7 @@ const Routes = ({ user, fetchWithUi, authenticationStore, onLoggingError }) => (
         <Home path="/" />
         <About path="/about" />
         <Play path="/play" user={user} fetchWithUi={fetchWithUi} />
-        <TicTacToe path="/games/TicTacToe/:gameId" />
+        <TicTacToeGame path="/games/TicTacToe/:gameId" />
 
         <Logout
             path="/logout"
