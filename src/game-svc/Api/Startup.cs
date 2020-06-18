@@ -188,10 +188,14 @@ namespace Api
                 .Key(g => g.Status, KeyType.Ascending)
                 .Create();
             db.Index<Game>()
-                .Key(g => g.Metadata.GameType, KeyType.Ascending)
+                .Key(g => g.GameType, KeyType.Ascending)
                 .Create();
             db.Collection<Game>().Indexes.CreateOne(new CreateIndexModel<Game>(
-                new IndexKeysDefinitionBuilder<Game>().Ascending(new StringFieldDefinition<Game>("Metadata.Players.ID"))
+                new IndexKeysDefinitionBuilder<Game>().Ascending(new StringFieldDefinition<Game>("Players.ID"))
+            ));
+
+            db.Collection<Player>().Indexes.CreateOne(new CreateIndexModel<Player>(
+                new IndexKeysDefinitionBuilder<Player>().Ascending(new StringFieldDefinition<Player>("Games.ID"))
             ));
         }
     }

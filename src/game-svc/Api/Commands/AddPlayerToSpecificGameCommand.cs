@@ -4,7 +4,6 @@ using Api.Persistence;
 using Api.SignalR;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Options;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -44,7 +43,7 @@ namespace Api.Commands
             {
                 await _gameAssert.NotTooManyOpenGamesAsync();
 
-                var waitingRoom = await _repository.AddPlayerIfNotThereAsync(request.GameId, new Game.GameMetadata.Player()
+                var waitingRoom = await _repository.AddPlayerIfNotThereAsync(request.GameId, new Game.Player()
                 {
                     ID = _playerIdentity.Id,
                     Name = _playerIdentity.Name,
@@ -59,21 +58,22 @@ namespace Api.Commands
                         throw new ItemNotFoundException();
                     }
                     
-                    if (waitingRoom.Metadata.Players.Any(p => p.ID == _playerIdentity.Id))
+                    if (waitingRoom.Players.Any(p => p.ID == _playerIdentity.Id))
                     {
                         throw new ValidationException("You are already in the game");
                     }
 
                     if (waitingRoom.Status != GameStatus.WaitingForPlayers ||
-                        waitingRoom.Metadata.MaxPlayers == waitingRoom.Metadata.PlayersCount)
+                        waitingRoom.MaxPlayers == waitingRoom.PlayersCount)
                     {
                         throw new ValidationException("Maximum number of players already reached");
                     }
                 }
 
-                if (waitingRoom.Metadata.MaxPlayers == waitingRoom.Metadata.Players.Count)
+                if (waitingRoom.MaxPlayers == waitingRoom.Players.Count)
                 {
-                    var game = await _repository.SetGameStatusAsync(waitingRoom.ID, waitingRoom.Status, GameStatus.InGame);
+                    var playerOrders = UniqueRandomRange.CreateArrayWithAllNumbersFromRange(waitingRoom.Players.Count);
+                    var game = await _repository.StartGameAsync(waitingRoom.ID, playerOrders);
                     await _gameHub.Clients.All.SendAsync("GameStarted", game);
                 }
                 else

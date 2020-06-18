@@ -10,21 +10,8 @@ using Xunit;
 
 namespace ApiTests.Persistence
 {
-    public class GameRepositoryTests: IDisposable
+    public class GameRepositoryTests : IDisposable
     {
-        private static readonly Game.GameMetadata.Player Einstein = new Game.GameMetadata.Player()
-        {
-            ID = Guid.NewGuid().ToString(),
-            Name = "Albert Einstein",
-            AcceptedAt = DateTime.UtcNow
-        };
-        private static readonly Game.GameMetadata.Player Eiffel = new Game.GameMetadata.Player()
-        {
-            ID = Guid.NewGuid().ToString(),
-            Name = "Gustave Eiffel",
-            AcceptedAt = DateTime.UtcNow
-        };
-
         private static readonly Random _random = new Random();
         private readonly IConfigurationRoot _configuration;
         private readonly string _dbName;
@@ -59,23 +46,14 @@ namespace ApiTests.Persistence
         [Fact]
         public async Task Should_create_game()
         {
-            var game = new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-                Metadata = new Game.GameMetadata()
-                {
-                    GameType = GameType.TicTacToe,
-                    MinPlayers = 2,
-                    MaxPlayers = 4,
-                    IsOpen = true,
-                    PlayersCount = 1,
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Einstein
-                    }
-                }
-            };
-            var gameSentToDb = game.DeepClone(); // need to clone it since mongodb will alter it (to add id for example)
+            var builder = new GameBuilder()
+                .TicTacToe
+                .MinMaxPlayers(2, 4)
+                .Open
+                .WithPlayerEinstein;
+
+            var game = builder.Build();
+            var gameSentToDb = builder.Build(); // need to get another one since mongodb will alter it (to add id for example)
 
             // Act
             var createdGame = await _repository.CreateAsync(gameSentToDb);
@@ -87,60 +65,28 @@ namespace ApiTests.Persistence
         }
 
         [Fact]
-        public async Task Should_get_games()
+        public async Task Should_get_playable_games()
         {
-            var game1 = await _repository.CreateAsync(new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-                Metadata = new Game.GameMetadata()
-                {
-                    GameType = GameType.GooseGame,
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Einstein
-                    }
-                }
-            });
-            var game2 = await _repository.CreateAsync(new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-                Metadata = new Game.GameMetadata()
-                {
-                    GameType = GameType.CardBattle,
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Einstein
-                    }
-                }
-            });
-            var game3 = await _repository.CreateAsync(new Game()
-            {
-                Status = GameStatus.TimedOut, // should not be picked
-                Metadata = new Game.GameMetadata()
-                {
-                    GameType = GameType.CardBattle,
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Einstein
-                    }
-                }
-            });
-            var game4 = await _repository.CreateAsync(new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-                Metadata = new Game.GameMetadata()
-                {
-                    GameType = GameType.CardBattle,
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Eiffel // should not be picked
-                    }
-                }
-            });
+            var game1 = await _repository.CreateAsync(new GameBuilder()
+                .GooseGame
+                .WithPlayerEiffel
+                .Build());
+            var game2 = await _repository.CreateAsync(new GameBuilder()
+                .CardBattle
+                .WithPlayerEiffel
+                .Build());
+            var game3 = await _repository.CreateAsync(new GameBuilder()
+                .TimedOut // should not be picked since it's not waiting for players
+                .WithPlayerEiffel
+                .Build());
+            var game4 = await _repository.CreateAsync(new GameBuilder()
+                .CardBattle
+                .WithPlayerEinstein // should not be picked since Einstein is already in the game
+                .Build());
 
             // Act
-            var games = await _repository.GetAsync(
-                Einstein.ID,
+            var games = await _repository.GetPlayableGamesAsync(
+                GameBuilder.Einstein.ID,
                 new[] { GameType.CardBattle, GameType.GooseGame },
                 new[] { GameStatus.WaitingForPlayers });
 
@@ -150,41 +96,25 @@ namespace ApiTests.Persistence
         }
 
         [Fact]
-        public async Task Should_be_true_when_already_in_game()
+        public async Task Should_count_be_two_when_already_in_two_games()
         {
-            var game1 = new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-                Metadata = new Game.GameMetadata()
-                {
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Einstein
-                    }
-                }
-            };
+            var game1 = new GameBuilder()
+                .WithPlayerEinstein
+                .Build();
             await _repository.CreateAsync(game1);
-            var game2 = new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-                Metadata = new Game.GameMetadata()
-                {
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Einstein
-                    }
-                }
-            };
+            var game2 = new GameBuilder()
+                .WithPlayerEinstein
+                .Build();
             await _repository.CreateAsync(game2);
 
             // Act
-            var numberOfGames = await _repository.GetNumberOfGamesAsync(Einstein.ID);
+            var numberOfGames = await _repository.GetNumberOfGamesAsync(GameBuilder.Einstein.ID);
 
             numberOfGames.Should().Be(2);
         }
 
         [Fact]
-        public async Task Should_be_false_when_not_already_in_game()
+        public async Task Should_count_be_zero_when_not_in_any_game()
         {
             var newPlayerId = Guid.NewGuid().ToString();
 
@@ -197,32 +127,21 @@ namespace ApiTests.Persistence
         [Fact]
         public async Task Should_add_player_when_not_there()
         {
-            var game = new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-                Metadata = new Game.GameMetadata()
-                {
-                    GameType = GameType.TicTacToe,
-                    MinPlayers = 2,
-                    MaxPlayers = 4,
-                    IsOpen = true,
-                    PlayersCount = 1,
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Einstein
-                    }
-                }
-            };
+            var game = new GameBuilder()
+                .TicTacToe
+                .WithPlayerEinstein
+                .Build();
             game = await _repository.CreateAsync(game);
 
             // Act
-            var updatedGame = await _repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
+            var updatedGame = await _repository.AddPlayerIfNotThereAsync(game.ID, GameBuilder.Eiffel);
 
-            updatedGame.Metadata.PlayersCount.Should().Be(2);
-            updatedGame.Metadata.Players.Should().BeEquivalentTo(new[]
+            updatedGame.Should().NotBeNull();
+            updatedGame!.PlayersCount.Should().Be(2);
+            updatedGame.Players.Should().BeEquivalentTo(new[]
             {
-                Einstein,
-                Eiffel
+                GameBuilder.Einstein,
+                GameBuilder.Eiffel
             }, options => options
                 .Using<DateTime>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1)) // Mongo slightly changes the datetime
                 .WhenTypeIs<DateTime>());
@@ -231,59 +150,64 @@ namespace ApiTests.Persistence
         [Fact]
         public async Task Should_not_add_player_when_already_there()
         {
-            var game = new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-                Metadata = new Game.GameMetadata()
-                {
-                    GameType = GameType.TicTacToe,
-                    MinPlayers = 2,
-                    MaxPlayers = 4,
-                    IsOpen = true,
-                    PlayersCount = 1,
-                    Players = new List<Game.GameMetadata.Player>()
-                    {
-                        Einstein
-                    }
-                }
-            };
+            var game = new GameBuilder()
+                .TicTacToe
+                .WithPlayerEiffel
+                .Build();
             game = await _repository.CreateAsync(game);
-            await _repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
+            await _repository.AddPlayerIfNotThereAsync(game.ID, GameBuilder.Eiffel);
 
             // Act
-            var updatedGame = await _repository.AddPlayerIfNotThereAsync(game.ID, Eiffel);
+            var updatedGame = await _repository.AddPlayerIfNotThereAsync(game.ID, GameBuilder.Eiffel);
 
             updatedGame.Should().BeNull();
         }
 
         [Fact]
-        public async Task Should_status_be_changed_when_not_yet_changed()
+        public async Task Should_status_change_to_ingame_when_not_yet_changed()
         {
-            var game = new Game()
-            {
-                Status = GameStatus.WaitingForPlayers,
-            };
+            var game = new GameBuilder().Build();
             game = await _repository.CreateAsync(game);
 
             // Act
-            game = await _repository.SetGameStatusAsync(game.ID, game.Status, GameStatus.InGame);
+            game = await _repository.StartGameAsync(game.ID, new int[0]);
 
-            game.Status.Should().Be(GameStatus.InGame);
+            game.Should().NotBeNull();
+            game!.Status.Should().Be(GameStatus.InGame);
         }
 
         [Fact]
         public async Task Should_no_change_status_when_it_was_changed_meanwhile()
         {
-            var game = new Game()
-            {
-                Status = GameStatus.InGame,
-            };
+            var game = new GameBuilder().InGame.Build();
             game = await _repository.CreateAsync(game);
 
             // Act: similate that we look for a waiting game, while in db it's already ingame
-            game = await _repository.SetGameStatusAsync(game.ID, GameStatus.WaitingForPlayers, GameStatus.InGame);
+            game = await _repository.StartGameAsync(game.ID, new int[0]);
 
             game.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task Should_get_games_where_player_is_in()
+        {
+            var player1 = new PlayerBuilder()
+                .Eiffel
+                .AddGame(new GameBuilder().WithPlayerEiffel)
+                .Build();
+            await _repository.CreatePlayerAsync(player1);
+            var player2 = new PlayerBuilder()
+                .Einstein
+                .AddGame(new GameBuilder().WithPlayerEinstein)
+                .Build();
+            await _repository.CreatePlayerAsync(player2);
+
+            // Act
+            var games = await _repository.GetPlayerGamesAsync(PlayerData.Einstein.ID);
+
+            games.Should().BeEquivalentTo(player2.Games, options => options
+                .Using<DateTime>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, 1)) // Mongo slightly changes the datetime
+                .WhenTypeIs<DateTime>());
         }
     }
 }

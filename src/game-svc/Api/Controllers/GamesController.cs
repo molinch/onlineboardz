@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Api.Commands;
 using Api.Persistence;
@@ -24,7 +23,13 @@ namespace Api.Controllers
         [HttpGet]
         public Task<IEnumerable<Game>> Get([FromQuery]IEnumerable<GameType> types, [FromQuery] IEnumerable<GameStatus> statuses)
         {
-            return _mediator.Send(new ListGamesQuery(types, statuses));
+            return _mediator.Send(new ListPlayableGamesQuery(types, statuses));
+        }
+
+        [HttpGet("mine")]
+        public Task<IEnumerable<Player.Game>> GetMine()
+        {
+            return _mediator.Send(new ListMyGamesQuery());
         }
     }
 }

@@ -66,7 +66,7 @@ namespace Api.Commands
                         request.GameType,
                         request.MaxPlayers,
                         request.Duration,
-                        new Game.GameMetadata.Player()
+                        new Game.Player()
                         {
                             ID = _playerIdentity.Id,
                             Name = _playerIdentity.Name,
@@ -79,19 +79,20 @@ namespace Api.Commands
                     }
                 }
 
-                if (waitingRoom.Metadata.MaxPlayers == waitingRoom.Metadata.Players.Count)
+                if (waitingRoom.MaxPlayers == waitingRoom.Players.Count)
                 {
-                    var game = await _repository.SetGameStatusAsync(waitingRoom.ID, waitingRoom.Status, GameStatus.InGame);
+                    var playerOrders = UniqueRandomRange.CreateArrayWithAllNumbersFromRange(waitingRoom.Players.Count);
+                    var game = await _repository.StartGameAsync(waitingRoom.ID, playerOrders);
                     if (game != null)
                     {
-                        await _gameHub.Clients.Users(waitingRoom.Metadata.Players.Select(p => p.ID))
+                        await _gameHub.Clients.Users(waitingRoom.Players.Select(p => p.ID))
                             .SendAsync("GameStarted", game);
                         waitingRoom = game;
                     }
                 }
                 else
                 {
-                    await _gameHub.Clients.Users(waitingRoom.Metadata.Players.Select(p => p.ID))
+                    await _gameHub.Clients.Users(waitingRoom.Players.Select(p => p.ID))
                         .SendAsync("PlayerAdded", waitingRoom);
                 }
 
@@ -108,21 +109,18 @@ namespace Api.Commands
                 var game = new Game()
                 {
                     Status = GameStatus.WaitingForPlayers,
-                    Metadata = new Game.GameMetadata()
+                    GameType = request.GameType, // add validation: check that value is part of enum values
+                    MinPlayers = metadata.MinPlayers,
+                    MaxPlayers = request.MaxPlayers ?? metadata.MaxPlayers,
+                    IsOpen = request.IsOpen,
+                    PlayersCount = 1,
+                    Players = new List<Game.Player>()
                     {
-                        GameType = request.GameType, // add validation: check that value is part of enum values
-                        MinPlayers = metadata.MinPlayers,
-                        MaxPlayers = request.MaxPlayers ?? metadata.MaxPlayers,
-                        IsOpen = request.IsOpen,
-                        PlayersCount = 1,
-                        Players = new List<Game.GameMetadata.Player>()
+                        new Game.Player()
                         {
-                            new Game.GameMetadata.Player()
-                            {
-                                ID = _playerIdentity.Id,
-                                Name = _playerIdentity.Name,
-                                AcceptedAt = DateTime.UtcNow
-                            }
+                            ID = _playerIdentity.Id,
+                            Name = _playerIdentity.Name,
+                            AcceptedAt = DateTime.UtcNow
                         }
                     }
                 };

@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace Api.Commands
 {
-    public class ListGamesQuery : IRequest<IEnumerable<Game>>
+    public class ListPlayableGamesQuery : IRequest<IEnumerable<Game>>
     {
         [JsonConstructor]
-        public ListGamesQuery(IEnumerable<GameType> types, IEnumerable<GameStatus> statuses)
+        public ListPlayableGamesQuery(IEnumerable<GameType> types, IEnumerable<GameStatus> statuses)
         {
             Types = types;
             Statuses = statuses;
@@ -20,7 +20,7 @@ namespace Api.Commands
         public IEnumerable<GameType> Types { get; }
         public IEnumerable<GameStatus> Statuses { get; }
 
-        public class ListGamesQueryHandler : IRequestHandler<ListGamesQuery, IEnumerable<Game>>
+        public class ListGamesQueryHandler : IRequestHandler<ListPlayableGamesQuery, IEnumerable<Game>>
         {
             private readonly PlayerIdentity _playerIdentity;
             private readonly IGameRepository _repository;
@@ -31,9 +31,10 @@ namespace Api.Commands
                 _repository = repository;
             }
 
-            public Task<IEnumerable<Game>> Handle(ListGamesQuery request, CancellationToken cancellationToken)
+            public async Task<IEnumerable<Game>> Handle(ListPlayableGamesQuery request, CancellationToken cancellationToken)
             {
-                return _repository.GetAsync(_playerIdentity.Id, request.Types, request.Statuses);
+                var games = await _repository.GetPlayableGamesAsync(_playerIdentity.Id, request.Types, request.Statuses);
+                return games;
             }
         }
     }

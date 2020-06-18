@@ -17,11 +17,71 @@ namespace Api.Persistence
             _database = database;
         }
 
-        public async Task<IEnumerable<Game>> GetAsync(string playerId, IEnumerable<GameType> gameTypes, IEnumerable<GameStatus> statuses)
+        public async Task<IEnumerable<Player.Game>> GetPlayerGamesAsync(string playerId)
+        {
+            return await _database.Queryable<Player>()
+                .Where(p => p.ID == playerId)
+                .SelectMany(p => p.Games)
+                .OrderByDescending(p => p.AcceptedAt)
+                .Take(50)
+                .ToListAsync();
+        }
+
+        public async Task<Player> CreatePlayerAsync(Player player)
+        {
+            await _database.SaveAsync(player);
+            return player;
+        }
+
+        public async Task UpdatePlayerGameAsync(Player player, Player.Game game)
+        {
+            /*
+             * var playerGame = new Player.Game()
+            {
+                ID = game.ID,
+                Status = game.Status,
+                GameType = game.GameType,
+                IsOpen = game.IsOpen,
+                AcceptedAt = game.Play
+            };*/
+
+            var updateResult = await _database.Update<Player>()
+                .Match(p => p.ID == player.ID && !p.Games.Any(g => g.ID == game.ID))
+                .Modify(p => p.Push(g => g.Games, new Player.Game()))
+                .ExecuteAsync();
+
+            if (updateResult.MatchedCount == 0) // game is already part of Games array, so we need to update it
+            {
+                var update = _database.Update<Player>()
+                  .Match(p => p.ID == player.ID)
+                  .WithArrayFilter($"{{ 'g.ID' : {game.ID} }}")
+                  .Modify($"{{ $set : {{ 'Games.$[x].Status' : {game.Status} }} }}");
+
+                if (game.StartedAt.HasValue)
+                {
+                    update = update.Modify($"{{ $set : {{ 'Games.$[x].StartedAt' : '{game.StartedAt.Value.ToIso()}' }} }}");
+                }
+
+                if (game.EndedAt.HasValue)
+                {
+                    update = update.Modify($"{{ $set : {{ 'Games.$[x].EndedAt' : '{game.EndedAt.Value.ToIso()}' }} }}");
+                }
+
+                updateResult = await update
+                  .ExecuteAsync();
+
+                if (updateResult.MatchedCount == 0)
+                {
+                    throw new Exception("Update didn't change anything");
+                }
+            }
+        }
+
+        public async Task<IEnumerable<Game>> GetPlayableGamesAsync(string playerId, IEnumerable<GameType> gameTypes, IEnumerable<GameStatus> statuses)
         {
             return await _database.Queryable<Game>()
-                .Where(g => g.Metadata.Players.Any(p => p.ID != playerId))
-                .Where(g => gameTypes.Contains(g.Metadata.GameType) && statuses.Contains(g.Status))
+                .Where(g => g.Players.Any(p => p.ID != playerId))
+                .Where(g => gameTypes.Contains(g.GameType) && statuses.Contains(g.Status))
                 .Take(50)
                 .ToListAsync();
         }
@@ -34,59 +94,70 @@ namespace Api.Persistence
         public Task<int> GetNumberOfGamesAsync(string playerId)
         {
             return _database.Queryable<Game>()
-                .Where(g => g.Metadata.Players.Any(p => p.ID == playerId))
+                .Where(g => g.Players.Any(p => p.ID == playerId))
                 .Where(g => g.Status == GameStatus.WaitingForPlayers || g.Status == GameStatus.InGame)
                 .CountAsync();
         }
 
-        public async Task<Game> CreateAsync(Game game)
+        public async Task<TGame> CreateAsync<TGame>(TGame game)
+            where TGame : Game
         {
             await _database.SaveAsync(game);
             return game;
         }
 
-        public async Task<Game?> AddPlayerIfNotThereAsync(string id, Game.GameMetadata.Player player)
+        public async Task<Game?> AddPlayerIfNotThereAsync(string id, Game.Player player)
         {
             var game = await _database.UpdateAndGet<Game>()
-                .Match(g => g.ID == id && !g.Metadata.Players.Any(p => p.ID == player.ID) && g.Status == GameStatus.WaitingForPlayers)
-                .Modify(g => g.Push(g => g.Metadata.Players, player))
-                .Modify(g => g.Inc(g => g.Metadata.PlayersCount, 1))
+                .Match(g => g.ID == id && !g.Players.Any(p => p.ID == player.ID) && g.Status == GameStatus.WaitingForPlayers)
+                .Modify(g => g.Push(g => g.Players, player))
+                .Modify(g => g.Inc(g => g.PlayersCount, 1))
                 .ExecuteAsync();
             return game;
         }
 
-        public async Task<Game?> AddPlayerToGameAsync(GameType gameType, int? maxPlayers, int? duration, Game.GameMetadata.Player player)
+        public async Task<Game?> AddPlayerToGameAsync(GameType gameType, int? maxPlayers, int? duration, Game.Player player)
         {
             var match = _database.UpdateAndGet<Game>()
                 .Match(g =>
-                    g.Metadata.GameType == gameType &&
-                    !g.Metadata.Players.Any(p => p.ID == player.ID) &&
+                    g.GameType == gameType &&
+                    !g.Players.Any(p => p.ID == player.ID) &&
                     g.Status == GameStatus.WaitingForPlayers);
 
             if (maxPlayers.HasValue)
             {
-                match = match.Match(g => g.Metadata.MaxPlayers <= maxPlayers);
+                match = match.Match(g => g.MaxPlayers <= maxPlayers);
             }
 
             if (duration.HasValue)
             {
-                match = match.Match(g => g.Metadata.MaxDuration <= duration);
+                match = match.Match(g => g.MaxDuration <= duration);
             }
 
             var game = await match
-                .Modify(g => g.Push(g => g.Metadata.Players, player))
-                .Modify(g => g.Inc(g => g.Metadata.PlayersCount, 1))
+                .Modify(g => g.Push(g => g.Players, player))
+                .Modify(g => g.Inc(g => g.PlayersCount, 1))
                 .ExecuteAsync();
 
             return game;
         }
 
-        public async Task<Game?> SetGameStatusAsync(string id, GameStatus oldStatus, GameStatus newStatus) =>
-            await _database.UpdateAndGet<Game>()
-                .Match(g => g.ID == id && g.Status == oldStatus)
-                .Modify(g => g.Status, newStatus)
-                .Modify(g => g.StartedAt, DateTime.UtcNow)
+        public async Task<Game?> StartGameAsync(string id, int[] playerOrders)
+        {
+            var update = _database.UpdateAndGet<Game>()
+                .Match(g => g.ID == id && g.Status == GameStatus.WaitingForPlayers)
+                .Modify(g => g.Status, GameStatus.InGame)
+                .Modify(g => g.StartedAt, DateTime.UtcNow);
+
+            for (var i = 0; i < playerOrders.Length; i++)
+            {
+                var playOrder = playerOrders[i];
+                update = update.Modify($"{{ $set : {{ 'Players.$[{i}].PlayOrder' : {playOrder} }} }}");
+            }
+
+            return await update
                 .ExecuteAsync();
+        }
 
         public async Task RemoveAsync(string id) =>
             await _database.DeleteAsync<Game>(id);
