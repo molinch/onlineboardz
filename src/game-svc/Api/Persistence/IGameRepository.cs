@@ -8,7 +8,7 @@ namespace Api.Persistence
         Task<Game?> AddPlayerIfNotThereAsync(string id, Game.Player player);
         Task<Game?> AddPlayerToGameAsync(GameType gameType, int? maxPlayers, int? duration, Game.Player player);
         Task<TGame> CreateGameAsync<TGame>(TGame game) where TGame : Game;
-        Task<Player> CreatePlayerAsync(Player player);
+        Task<Player?> CreatePlayerIfNotThereAsync(Player player);
         Task<Game?> GetAsync(string id);
         Task<int> GetNumberOfGamesAsync(string playerId);
         Task<IEnumerable<Game>> GetPlayableGamesAsync(string playerId, IEnumerable<GameType> gameTypes, IEnumerable<GameStatus> statuses);
