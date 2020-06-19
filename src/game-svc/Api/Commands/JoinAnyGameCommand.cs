@@ -1,4 +1,5 @@
-﻿using Api.Exceptions;
+﻿using Api.Domain;
+using Api.Exceptions;
 using Api.Extensions;
 using Api.Persistence;
 using Api.SignalR;
@@ -35,15 +36,17 @@ namespace Api.Commands
             private readonly PlayerIdentity _playerIdentity;
             private readonly IGameRepository _repository;
             private readonly GameAssert _gameAssert;
+            private readonly IUniqueRandomRangeCreator _uniqueRandomRangeCreator;
             private readonly IHubContext<GameHub> _gameHub;
 
             public AddPlayerToAnyGameCommandHander(PlayerIdentity playerIdentity, IGameRepository repository,
-                IHubContext<GameHub> gameHub, GameAssert gameAssert)
+                IHubContext<GameHub> gameHub, GameAssert gameAssert, IUniqueRandomRangeCreator uniqueRandomRangeCreator)
             {
                 _playerIdentity = playerIdentity;
                 _repository = repository;
                 _gameHub = gameHub;
                 _gameAssert = gameAssert;
+                _uniqueRandomRangeCreator = uniqueRandomRangeCreator;
             }
 
             public async Task<Game> Handle(JoinAnyGameCommand request, CancellationToken cancellationToken)
@@ -79,9 +82,14 @@ namespace Api.Commands
                     }
                 }
 
+                if (waitingRoom.ID == null)
+                {
+                    throw new Exception("Since the game has been created an ID must be set");
+                }
+
                 if (waitingRoom.MaxPlayers == waitingRoom.Players.Count)
                 {
-                    var playerOrders = UniqueRandomRange.CreateArrayWithAllNumbersFromRange(waitingRoom.Players.Count);
+                    var playerOrders = _uniqueRandomRangeCreator.CreateArrayWithAllNumbersFromRange(waitingRoom.Players.Count);
                     var game = await _repository.StartGameAsync(waitingRoom.ID, playerOrders);
                     if (game != null)
                     {
@@ -124,7 +132,7 @@ namespace Api.Commands
                         }
                     }
                 };
-                return await _repository.CreateAsync(game);
+                return await _repository.CreateGameAsync(game);
             }
         }
     }

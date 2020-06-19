@@ -1,4 +1,4 @@
-﻿namespace Api.Commands
+﻿namespace Api.Domain
 {
     public class GameOptions
     {

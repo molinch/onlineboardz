@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Api.Persistence
 {
-    public class TicTacToeRepository
+    public class TicTacToeRepository : ITicTacToeRepository
     {
         private readonly DB _database;
 
@@ -12,10 +12,16 @@ namespace Api.Persistence
             _database = database;
         }
 
-        public async Task<TicTacToeGame?> SetTicTacToeStepAsync(string id, int index, bool value) =>
-            await _database.UpdateAndGet<TicTacToeGame>()
-                 .Match(g => g.ID == id)
-                 .Modify($"{{ $set : {{ 'Games.$[{index}].Status' : {value} }} }}")
+        public async Task<TicTacToeGame> SetTicTacToeStepAsync(string gameId, int stepIndex, bool value)
+        {
+            var game = await _database.UpdateAndGet<TicTacToeGame>()
+                 .Match(g => g.ID == gameId)
+                 .Modify($"{{ $set : {{ 'Steps.{stepIndex}' : {value.ToString().ToLowerInvariant()} }} }}")
                  .ExecuteAsync();
+
+            if (game == null) throw new UpdateException();
+
+            return game;
+        }
     }
 }

@@ -1,13 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Api.Commands
+namespace Api.Domain
 {
-    public static class UniqueRandomRange
+    public class UniqueRandomRangeCreator : IUniqueRandomRangeCreator
     {
-        public static int[] CreateArrayWithAllNumbersFromRange(int rangeMax)
+        private readonly Random _random;
+
+        public UniqueRandomRangeCreator()
         {
-            var random = new Random();
+            _random = new Random();
+        }
+
+        public IReadOnlyList<int> CreateArrayWithAllNumbersFromRange(int rangeMax)
+        {
             var uniqueSet = new HashSet<int>();
             int[] playerOrders = new int[rangeMax];
             for (int i = 0; i < rangeMax; i++)
@@ -15,7 +21,7 @@ namespace Api.Commands
                 int value;
                 do
                 {
-                    value = random.Next(0, rangeMax - 1);
+                    value = _random.Next(0, rangeMax); // first value is inclusive, second is exclusive (that's why we don't put a -1)
                 } while (uniqueSet.Contains(value));
                 uniqueSet.Add(value);
                 playerOrders[i] = value;

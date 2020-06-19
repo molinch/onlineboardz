@@ -17,6 +17,7 @@
     <PackageReference Include="MongoDB.Driver" Version="2.10.4" />
     <PackageReference Include="MongoDB.Entities" Version="12.7.0" />
     <PackageReference Include="NSwag.AspNetCore" Version="13.6.1" />
+    <PackageReference Include="Scrutor" Version="3.2.1" />
   </ItemGroup>
 
 

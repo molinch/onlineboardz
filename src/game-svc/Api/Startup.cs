@@ -1,4 +1,5 @@
 using Api.Commands;
+using Api.Domain;
 using Api.Exceptions;
 using Api.Extensions;
 using Api.Persistence;
@@ -134,6 +135,8 @@ namespace Api
             // Online boardz DI setup
             services.AddSingleton<PlayerIdentity>();
             services.AddSingleton<GameAssert>();
+            services.AddSingleton<IUniqueRandomRangeCreator, UniqueRandomRangeCreator>();
+            services.Decorate<IUniqueRandomRangeCreator, PrefilledUniqueRandomRangeCreator>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

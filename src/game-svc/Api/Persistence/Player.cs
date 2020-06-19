@@ -5,8 +5,12 @@ using System.Collections.Generic;
 
 namespace Api.Persistence
 {
-    public class Player : Entity
+    public class Player : IEntity
     {
+        [BsonId]
+        public string ID { get; set; } = null!;
+        public DateTime ModifiedOn { get; set; }
+
         public string Name { get; set; } = null!;
 
         public int SchemaVersion { get; set; } = 1;

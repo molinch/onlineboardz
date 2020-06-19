@@ -1,5 +1,5 @@
 ﻿using Api.Persistence;
-using MongoDB.Bson;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,7 +15,7 @@ namespace ApiTests.Persistence
             Name = name;
         }
 
-        public string ID { get; } = ObjectId.GenerateNewId().ToString();
+        public string ID { get; } = Guid.NewGuid().ToString();
         public string Name { get; }
     }
 
@@ -33,21 +33,36 @@ namespace ApiTests.Persistence
             return this;
         }
 
-        public PlayerBuilder Einstein => FromPlayerData(PlayerData.Einstein);
-        public PlayerBuilder Eiffel => FromPlayerData(PlayerData.Eiffel);
-
-        public PlayerBuilder AddGame(Game game)
+        public Player.Game ToPlayerGame(Game game)
         {
-            _player.Games.Add(new Player.Game()
+            return new Player.Game()
             {
-                ID = game.ID,
+                ID = game.ID!,
                 Status = game.Status,
                 GameType = game.GameType,
                 IsOpen = game.IsOpen,
                 AcceptedAt = game.Players.Where(p => p.ID == _player.ID).Single().AcceptedAt,
                 StartedAt = game.StartedAt,
                 EndedAt = game.EndedAt,
-            });
+            };
+        }
+
+        public PlayerBuilder Einstein => FromPlayerData(PlayerData.Einstein);
+        public PlayerBuilder Eiffel => FromPlayerData(PlayerData.Eiffel);
+
+        public PlayerBuilder AddGame(Func<GameBuilder,GameBuilder> withBuilder)
+        {
+            return AddGame(withBuilder(new GameBuilder()));
+        }
+
+        public PlayerBuilder AddGame(GameBuilder builder)
+        {
+            return AddGame(builder.Build());
+        }
+
+        public PlayerBuilder AddGame(Game game)
+        {
+            _player.Games.Add(ToPlayerGame(game));
             return this;
         }
 

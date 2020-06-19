@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
-namespace Api.Commands
+namespace Api.Domain
 {
     public class GameAssert
     {

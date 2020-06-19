@@ -43,10 +43,32 @@ namespace ApiTests.Persistence
 
         public GameBuilder Open { get { _game.IsOpen = true; return this; } }
 
+        public GameBuilder RandomId
+        {
+            get
+            {
+                _game.ID = ObjectId.GenerateNewId().ToString();
+                return this;
+            }
+        }
+
         public GameBuilder MinMaxPlayers(int min, int max)
         {
             _game.MinPlayers = min;
             _game.MaxPlayers = max;
+            return this;
+        }
+
+        public GameBuilder StartedEndedAt(DateTime? startedAt, DateTime? endedAt)
+        {
+            _game.StartedAt = startedAt;
+            _game.EndedAt = endedAt;
+            return this;
+        }
+
+        public GameBuilder MaxDuration(int maxDuration)
+        {
+            _game.MaxDuration = maxDuration;
             return this;
         }
 
@@ -59,9 +81,12 @@ namespace ApiTests.Persistence
                 Status = _game.Status,
                 MinPlayers = _game.MinPlayers,
                 MaxPlayers = _game.MaxPlayers,
+                MaxDuration = _game.MaxDuration,
                 Players = _game.Players.ToList(),
                 PlayersCount = _game.Players.Count,
-                IsOpen = _game.IsOpen
+                IsOpen = _game.IsOpen,
+                StartedAt = _game.StartedAt,
+                EndedAt = _game.EndedAt,
             };
         }
 

@@ -7,8 +7,12 @@ namespace Api.Persistence
 {
     [BsonDiscriminator(RootClass = true)]
     [BsonKnownTypes(typeof(TicTacToeGame), typeof(MemoryGame))]
-    public class Game: Entity
+    public class Game: IEntity
     {
+        [BsonId]
+        public string? ID { get; set; }
+        public DateTime ModifiedOn { get; set; }
+
         public GameStatus Status { get; set; }
 
         public DateTime? StartedAt { get; set; }
