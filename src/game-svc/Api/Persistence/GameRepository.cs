@@ -27,10 +27,30 @@ namespace Api.Persistence
                 .ToListAsync();
         }
 
-        public async Task<Player> CreatePlayerAsync(Player player)
+        public async Task<Player?> CreatePlayerIfNotThereAsync(Player player)
         {
-            await _database.SaveAsync(player);
-            return player;
+            var modifiedOn = DateTime.UtcNow;
+            var result = await _database.Collection<Player>()
+                .UpdateOneAsync(
+                    p => p.ID == player.ID,
+                    Builders<Player>.Update
+                        .SetOnInsert(p => p.ID, player.ID)
+                        .SetOnInsert(p => p.ModifiedOn, modifiedOn)
+                        .SetOnInsert(p => p.Name, player.Name)
+                        .SetOnInsert(p => p.SchemaVersion, player.SchemaVersion)
+                        .SetOnInsert(p => p.Games, (IEnumerable<Player.Game>)player.Games ?? Array.Empty<Player.Game>()),
+                    new UpdateOptions { IsUpsert = true });
+
+            if (result.MatchedCount == 0)
+            {
+                if (result.UpsertedId == null) throw new InsertException();
+                player.ModifiedOn = modifiedOn;
+                return player;
+            }
+            else // already existing
+            {
+                return null;
+            }
         }
 
         public async Task AddOrUpdatePlayerGameAsync(Player player, Player.Game game)

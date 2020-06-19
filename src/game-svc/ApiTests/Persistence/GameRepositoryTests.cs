@@ -242,12 +242,26 @@ namespace ApiTests.Persistence
                 .AddGame(b => b.WithPlayerEiffel);
 
             var player = builder.Build(); // need to get another one since mongodb will alter it (to add id for example)
-            var createdPlayer = await _repository.CreatePlayerAsync(builder.Build()); 
+            var createdPlayer = await _repository.CreatePlayerIfNotThereAsync(builder); 
 
             createdPlayer.Should().BeEquivalentTo(player, options => options.Excluding(e => e.ID).Excluding(e => e.ModifiedOn));
-            createdPlayer.ID.Should().NotBeNullOrWhiteSpace();
+            createdPlayer!.ID.Should().NotBeNullOrWhiteSpace();
             createdPlayer.ModifiedOn.Should().BeBefore(DateTime.UtcNow.AddHours(1));
             createdPlayer.ModifiedOn.Should().BeAfter(DateTime.UtcNow.AddHours(-1));
+        }
+
+        [Fact]
+        public async Task Should_create_player_only_once()
+        {
+            var builder = new PlayerBuilder()
+                .Eiffel
+                .AddGame(b => b.WithPlayerEiffel);
+
+            var createdPlayer = await _repository.CreatePlayerIfNotThereAsync(builder);
+            var createdPlayer2 = await _repository.CreatePlayerIfNotThereAsync(builder);
+
+            createdPlayer.Should().NotBeNull();
+            createdPlayer2.Should().BeNull();
         }
 
         [Fact]
@@ -257,12 +271,12 @@ namespace ApiTests.Persistence
                 .Eiffel
                 .AddGame(b => b.WithPlayerEiffel)
                 .Build();
-            await _repository.CreatePlayerAsync(player1);
+            await _repository.CreatePlayerIfNotThereAsync(player1);
             var player2 = new PlayerBuilder()
                 .Einstein
                 .AddGame(b => b.WithPlayerEinstein)
                 .Build();
-            await _repository.CreatePlayerAsync(player2);
+            await _repository.CreatePlayerIfNotThereAsync(player2);
 
             // Act
             var games = await _repository.GetPlayerGamesAsync(PlayerData.Einstein.ID);
@@ -386,7 +400,7 @@ namespace ApiTests.Persistence
         {
             var builder = new PlayerBuilder().Einstein;
             var player = builder.Build();
-            await _repository.CreatePlayerAsync(player);
+            await _repository.CreatePlayerIfNotThereAsync(player);
             var game = builder.ToPlayerGame(new GameBuilder().WithPlayerEinstein.CardBattle.RandomId);
 
             // Act
@@ -407,7 +421,7 @@ namespace ApiTests.Persistence
                     .Einstein
                     .AddGame(gameBuilder);
             var player = playerBuilder.Build();
-            await _repository.CreatePlayerAsync(player);
+            await _repository.CreatePlayerIfNotThereAsync(player);
             gameBuilder.TimedOut.StartedEndedAt(DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(3));
             var updatedGame = playerBuilder.ToPlayerGame(gameBuilder);
 
