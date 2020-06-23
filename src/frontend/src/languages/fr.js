@@ -34,9 +34,10 @@ const french = {
     "Scrabble-Desc": "Word game where words placed next to each other",
     "TicTacToe_Won": "{{winner}} won",
     "TicTacToe_MovesHistory": "History of moves: ",
-    "TicTacToe_NextPlayer": "Next player: ",
+    "TicTacToe_NextPlayer": "Next player: {{player}}",
     "TicTacToe_BackToBeginning": "Back to beginning",
     "TicTacToe_BackToMoveNr": "Back to move n°",
+    "TicTacToe_GameEnded": "This game has ended",
 
     "OopsLoginError": "Oops an error occured during login...",
 }

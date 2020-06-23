@@ -13,6 +13,9 @@ import { useTranslation } from 'react-i18next';
 import { useCreateOnce } from './CustomHooks';
 import Routes from './Routes';
 import FetchWithUIFeedback from './FetchWithUIFeedback';
+import ReachabilityChecker from './ReachabilityChecker';
+import config from './config';
+import { GameTypeInfo } from './games/GameType';
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
 
@@ -21,13 +24,16 @@ const onLoggingError = error => {
     navigate("/login-error?errorText=" + errorText);
 }
 
+const gameNotificationClient = new GameNotificationClient();
+const gameReachabilityChecker = new ReachabilityChecker(`${config.GameServiceUri}/reachability`);
+
 function App() {
     console.log('Render App');
-
-    const gameNotificationClient = useCreateOnce(() => new GameNotificationClient());
     const [user, setUser] = useState(null);
-    const [menuItems, setMenuItems] = useState((<></>));
+    const [menuItems, setMenuItems] = useState(<></>);
     const [menuSelected, setMenuSelected] = useState("/home");
+    const [error, setError] = useState(null);
+    const [myGames, setMyGames] = useState(null);
     const { t } = useTranslation();
     const location = useLocation();
 
@@ -40,12 +46,22 @@ function App() {
             }
 
             setUser({
+                id: user.profile.sub,
                 name: user.profile.name,
                 email: user.profile.email,
                 picture: user.profile.picture,
             });
 
-            await gameNotificationClient.load(user.access_token);
+            gameNotificationClient.load(user.access_token);
+
+            (async () => {
+                const fetchedGames = await fetchWithUi.get(`${config.GameServiceUri}/games/mine`);
+                if (fetchedGames.error) {
+                    setError(fetchedGames.error);
+                    return;
+                }
+                setMyGames(fetchedGames);
+            })();
         }
     ));
 
@@ -61,7 +77,7 @@ function App() {
         await authenticationStore.logout();
     }, [user, authenticationStore]);
 
-    const fetchWithUi = new FetchWithUIFeedback(() => authenticationStore?.user?.access_token);
+    const fetchWithUi = useCreateOnce(() => new FetchWithUIFeedback(() => authenticationStore?.user?.access_token));
 
     const switchLanguage = lng => {
         i18n.changeLanguage(lng);
@@ -94,11 +110,22 @@ function App() {
                     <Menu.Item key="/logout" onClick={logout}>{t("Logout")}</Menu.Item>
                 </SubMenu>
             );
-            myGamesMenu = (
-                <SubMenu key="mygames" title={t('MyGames')} inlineCollapsed={false}>
-                    <Menu.Item key="/games/TicTacToe"><Link to="/games/TicTacToe/dummy">{t("TicTacToe")}</Link></Menu.Item>
-                </SubMenu>
-            );
+
+            if (myGames && myGames.length > 0) {
+                myGamesMenu = (
+                    <SubMenu key="mygames" title={t('MyGames')} inlineCollapsed={false}>
+                        {myGames.map(g => {
+                            const gameTypeInfo = GameTypeInfo.ById(g.gameType);
+                            const uri = `/games/${gameTypeInfo.name}/${g.id}`;
+                            return (
+                                <Menu.Item key={g.id}>
+                                    <Link to={uri}>{t(gameTypeInfo.name)}
+                                </Link>
+                            </Menu.Item>);
+                        })}
+                    </SubMenu>
+                );
+            }
         }
 
         const menuItems = (
@@ -139,14 +166,13 @@ function App() {
             });
             return found;
         };
-        debugger;
         findSelectedKeys(menuItems.props.children, setOfDefaultSelectedKeys, 1);
         let defaultSelectedKeys = Array.from(setOfDefaultSelectedKeys).sort((a, b) => a.level < b.level ? -1 : 1).map(m => m.key);
         if (defaultSelectedKeys.length === 0) {
             defaultSelectedKeys = ["/home"]
         }
         setMenuSelected(defaultSelectedKeys);
-    }, [pathName, logout, t, user]);
+    }, [pathName, logout, t, user, fetchWithUi, myGames]);
 
     const onOpenChange = m => {
         setMenuSelected(m);
@@ -171,6 +197,7 @@ function App() {
 
                     </Header>
                     <Content>
+                        {error}
                         <h1><img src={logo} className="App-logo" alt={t("OnlineBoardzLogo")} />{t("OnlineBoardz")}</h1>
 
                         <Routes
@@ -178,6 +205,9 @@ function App() {
                             fetchWithUi={fetchWithUi}
                             authenticationStore={authenticationStore}
                             onLoggingError={onLoggingError}
+                            gameNotificationClient={gameNotificationClient}
+                            gameReachabilityChecker={gameReachabilityChecker}
+                            setError={setError}
                         />
 
                         <LoginStatus

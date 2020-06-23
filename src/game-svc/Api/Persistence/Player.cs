@@ -2,6 +2,7 @@
 using MongoDB.Entities.Core;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Api.Persistence
 {
@@ -19,6 +20,20 @@ namespace Api.Persistence
 
         public class Game
         {
+            public static Game From(string playerId, Persistence.Game game)
+            {
+                return new Game()
+                {
+                    ID = game.ID!,
+                    Status = game.Status,
+                    GameType = game.GameType,
+                    IsOpen = game.IsOpen,
+                    AcceptedAt = game.Players.Where(p => p.ID == playerId).Single().AcceptedAt,
+                    StartedAt = game.StartedAt,
+                    EndedAt = game.EndedAt,
+                };
+            }
+
             [BsonId]
             public string ID { get; set; } = null!;
             public GameStatus Status { get; set; }

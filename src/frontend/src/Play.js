@@ -3,7 +3,7 @@ import { Card, Modal, InputNumber, Switch } from 'antd';
 import { HeartOutlined, HeartFilled, SmileOutlined, SmileFilled } from '@ant-design/icons';
 import CardIcon from './CardIcon';
 import { GameTypeInfo } from './games/GameType';
-import { useTranslation, Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import getGameData from './games/GameData';
 import { navigate } from "@reach/router";
 import config from './config';
@@ -24,10 +24,9 @@ const Favorite = props =>
 
 const defaultGameOptions = { hasMaxPlayers: false, maxPlayers: null, specificDuration: false, duration: null, isOpen: true };
 
-const Play = ({ user, fetchWithUi }) => {
+const Play = ({ user, fetchWithUi, setError }) => {
     const { t } = useTranslation();
     const [gameTypes, setGameTypes] = useState([]);
-    const [error, setError] = useState(<></>);
     const [selectedGame, setSelectedGame] = useState(null);
     const [gameOptions, setGameOptions] = useState(defaultGameOptions);
     useEffect(() => {
@@ -42,7 +41,7 @@ const Play = ({ user, fetchWithUi }) => {
             }
             setGameTypes(response);
         })();
-    }, [user, fetchWithUi]);
+    }, [user, fetchWithUi, setError]);
 
     const onGameChosen = (gameType, gameTypeInfo) => {
         setSelectedGame({ gameType, gameTypeInfo });
@@ -73,8 +72,8 @@ const Play = ({ user, fetchWithUi }) => {
             return;
         }
         
-        const gameTypeInfo = GameTypeInfo.ById(response.metadata.gameType);
-        navigate(`/games/${gameTypeInfo.name}/${response.id}`);
+        const gameTypeInfo = GameTypeInfo.ById(response.gameType);
+        navigate(`/games/${gameTypeInfo.name}/${response.id}`, { state: { game: response } });
         reset();
     }
 
@@ -178,8 +177,6 @@ const Play = ({ user, fetchWithUi }) => {
     return (
         <div>
             <h1>{t('ChooseGame')}</h1>
-            {error}
-
             <div className="seek-cards">
                 {gameTypes.map(g => {
                     const gameTypeInfo = GameTypeInfo.ById(g.gameType);

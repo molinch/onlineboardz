@@ -12,11 +12,14 @@ namespace Api.Persistence
             _database = database;
         }
 
-        public async Task<TicTacToeGame> SetTicTacToeStepAsync(string gameId, int stepIndex, bool value)
+        public async Task<TicTacToe> SetTicTacToeStepAsync(string? nextPlayerId, string gameId, int cellIndex, bool value, int stepNumber, GameStatus nextStatus)
         {
-            var game = await _database.UpdateAndGet<TicTacToeGame>()
-                 .Match(g => g.ID == gameId)
-                 .Modify($"{{ $set : {{ 'Steps.{stepIndex}' : {value.ToString().ToLowerInvariant()} }} }}")
+            var game = (TicTacToe)await _database.UpdateAndGet<Game>()
+                 .Match(g => g.ID == gameId && g.Status == GameStatus.InGame && ((TicTacToe)g).Cells[cellIndex] == null)
+                 .Modify($"{{ $set : {{ 'Status' : {(int)nextStatus} }} }}")
+                 .Modify($"{{ $set : {{ 'NextPlayerId' : '{nextPlayerId}' }} }}")
+                 .Modify($"{{ $set : {{ 'Cells.{cellIndex}' : {{ 'Step': {value.ToString().ToLowerInvariant()}, 'Number': {stepNumber} }} }} }}")
+                 .Option(g => g.ReturnDocument = MongoDB.Driver.ReturnDocument.After)
                  .ExecuteAsync();
 
             if (game == null) throw new UpdateException();

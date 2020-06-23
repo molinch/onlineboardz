@@ -1,47 +1,85 @@
 import { HubConnectionBuilder, HttpTransportType } from '@microsoft/signalr';
 import config from './config';
+import { sleep } from './Utils';
 
 class GameNotificationClient {
-    constructor(onPlayerAdded, onGameStarted) {
-        this.onPlayerAdded = onPlayerAdded;
-        this.onGameStarted = onGameStarted;
+    constructor() {
+        this._handlers = new Set();
     }
 
-    async load(accessToken) {
-        try {
-            const options = {
-                skipNegotiation: true,
-                transport: HttpTransportType.WebSockets,
-                accessTokenFactory: () => accessToken
-            };
+    nextRetry = retryContext => {
+        console.log(retryContext);
 
-            const connection = new HubConnectionBuilder()
-                .withUrl(`${config.GameServiceUri}/hubs/game`, options)
-                .withAutomaticReconnect({
-                    nextRetryDelayInMilliseconds: retryContext => {
-                        if (retryContext.elapsedMilliseconds < 60*1000) { // we've been reconnecting for less than 60 seconds so far
-                            return 2*1000;
-                        } else if (retryContext.elapsedMilliseconds < 10*60*1000) { // we've been reconnecting for less than 10 minutes so far
-                            return 5*1000;
-                        } else {
-                            return 10*1000;
-                        }
-                    }
-                })
-                .build();
-            await connection.start();
+        if (retryContext.elapsedMilliseconds < 60*1000) { // we've been reconnecting for less than 60 seconds so far
+            return 2*1000;
+        } else if (retryContext.elapsedMilliseconds < 10*60*1000) { // we've been reconnecting for less than 10 minutes so far
+            return 5*1000;
+        } else {
+            return 10*1000;
+        }
+    }
 
-            connection.on('PlayerAdded', game => {
-                console.log('Player added to game');
-                this.onPlayerAdded(game);
-            });
+    _connect = async accessToken => {
+        const options = {
+            skipNegotiation: true,
+            transport: HttpTransportType.WebSockets,
+            accessTokenFactory: () => accessToken
+        };
 
-            connection.on('GameStarted', game => {
-                console.log('Game started');
-                this.onGameStarted(game);
-            });
-        } catch (error) {
-            console.log(error);
+        this._connection = new HubConnectionBuilder()
+            .withUrl(`${config.GameServiceUri}/hubs/game`, options)
+            .withAutomaticReconnect({
+                nextRetryDelayInMilliseconds: this.nextRetry
+            })
+            .build();
+        await this._connection.start();
+    }
+    
+    addHandler = (methodName, callback) => {
+        const handler = { methodName, callback };
+        this._handlers.add(handler);
+
+        if (this._connection) {
+            try {
+                this._connection.on(handler.methodName, data => handler.callback(data));
+            } catch (err) { console.log(err); }
+        }
+
+        return () => this._removeHandler(handler);
+    }
+
+    _removeHandler = (handler) => {
+        // for whatever reason signalr cannot take the callback directly, it needs to be wrapped in another arrow function directly passed to it...
+        // that makes the unsubscribing more complex since that exact callback shall be used, but we cannot use it, as it was only directly passed
+        // storing it, then passing it, doesn't work, it needs to be passed directly (I have no clue why)
+        // hence to remove a handler, we remove them all, and add them back... nasty!
+        this._handlers.delete(handler);
+        this._connection.off(handler.methodName)
+        this._handlers.forEach(h => {
+            if (handler.methodName === h.methodName) {
+                this._connection.on(h.methodName, data => h.callback(data));
+            }
+        });
+    }
+
+    load = async accessToken => {
+        let elapsedMilliseconds = 0;
+        let previousRetryCount = 0;
+        
+        while (true) {
+            try {
+                await this._connect(accessToken);
+                this._handlers.forEach(h => {
+                    this._connection.on(h.methodName, data => h.callback(data));
+                });
+                return;
+            } catch (error) {
+                const retryContext = { elapsedMilliseconds, previousRetryCount, retryReason: error };
+                const nextRetry = this.nextRetry(retryContext);
+                await sleep(nextRetry);
+                elapsedMilliseconds += nextRetry;
+                previousRetryCount++;
+            }
         }
     }
 }

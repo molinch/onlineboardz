@@ -44,6 +44,12 @@ namespace Api.Commands
 
             public async Task<Game> Handle(AddPlayerToSpecificGameCommand request, CancellationToken cancellationToken)
             {
+                await _repository.CreatePlayerIfNotThereAsync(new Player()
+                {
+                    ID = _playerIdentity.Id,
+                    Name = _playerIdentity.Name,
+                });
+
                 await _gameAssert.NotTooManyOpenGamesAsync();
 
                 var waitingRoom = await _repository.AddPlayerIfNotThereAsync(request.GameId, new Game.Player()
@@ -55,7 +61,7 @@ namespace Api.Commands
 
                 if (waitingRoom == null)
                 {
-                    waitingRoom = await _repository.GetAsync(request.GameId);
+                    waitingRoom = await _repository.GetAsync<TicTacToe>(request.GameId);
                     if (waitingRoom == null)
                     {
                         throw new ItemNotFoundException();
@@ -73,15 +79,29 @@ namespace Api.Commands
                     }
                 }
 
+                await _repository.AddOrUpdatePlayerGameAsync(_playerIdentity.Id, Player.Game.From(_playerIdentity.Id, waitingRoom));
+
                 if (waitingRoom.MaxPlayers == waitingRoom.Players.Count)
                 {
                     var playerOrders = _uniqueRandomRangeCreator.CreateArrayWithAllNumbersFromRange(waitingRoom.Players.Count);
                     var game = await _repository.StartGameAsync(waitingRoom.ID!, playerOrders);
-                    await _gameHub.Clients.All.SendAsync("GameStarted", game);
+
+                    if (game != null)
+                    {
+                        foreach (var player in game.Players)
+                        {
+                            await _repository.AddOrUpdatePlayerGameAsync(player.ID, Player.Game.From(player.ID, game));
+                        }
+
+                        await _gameHub.Clients.Users(waitingRoom.Players.Select(p => p.ID))
+                            .SendAsync("GameStarted", game);
+                        waitingRoom = game;
+                    }
                 }
                 else
                 {
-                    await _gameHub.Clients.All.SendAsync("PlayerAdded", waitingRoom);
+                    await _gameHub.Clients.Users(waitingRoom.Players.Select(p => p.ID))
+                        .SendAsync("PlayerAdded", waitingRoom);
                 }
 
                 return waitingRoom;

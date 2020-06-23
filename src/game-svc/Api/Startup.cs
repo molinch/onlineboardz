@@ -117,8 +117,6 @@ namespace Api
                 document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor(JwtBearerDefaults.AuthenticationScheme));
             });
 
-            services.AddSingleton<IGameRepository, GameRepository>();
-
             services.AddHttpContextAccessor();
             services.AddMediatR(typeof(Startup));
 
@@ -137,6 +135,9 @@ namespace Api
             services.AddSingleton<GameAssert>();
             services.AddSingleton<IUniqueRandomRangeCreator, UniqueRandomRangeCreator>();
             services.Decorate<IUniqueRandomRangeCreator, PrefilledUniqueRandomRangeCreator>();
+            services.AddSingleton<IGameRepository, GameRepository>();
+            services.AddSingleton<ITicTacToeRepository, TicTacToeRepository>();
+            services.AddSingleton<IGameFactory, GameFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -37,16 +37,19 @@ namespace Api.Commands
             private readonly IGameRepository _repository;
             private readonly GameAssert _gameAssert;
             private readonly IUniqueRandomRangeCreator _uniqueRandomRangeCreator;
+            private readonly IGameFactory _gameFactory;
             private readonly IHubContext<GameHub> _gameHub;
 
             public AddPlayerToAnyGameCommandHander(PlayerIdentity playerIdentity, IGameRepository repository,
-                IHubContext<GameHub> gameHub, GameAssert gameAssert, IUniqueRandomRangeCreator uniqueRandomRangeCreator)
+                IHubContext<GameHub> gameHub, GameAssert gameAssert, IUniqueRandomRangeCreator uniqueRandomRangeCreator,
+                IGameFactory gameFactory)
             {
                 _playerIdentity = playerIdentity;
                 _repository = repository;
                 _gameHub = gameHub;
                 _gameAssert = gameAssert;
                 _uniqueRandomRangeCreator = uniqueRandomRangeCreator;
+                _gameFactory = gameFactory;
             }
 
             public async Task<Game> Handle(JoinAnyGameCommand request, CancellationToken cancellationToken)
@@ -55,6 +58,12 @@ namespace Api.Commands
                 {
                     throw new ValidationException("Invalid game type");
                 }
+
+                await _repository.CreatePlayerIfNotThereAsync(new Player()
+                {
+                    ID = _playerIdentity.Id,
+                    Name = _playerIdentity.Name,
+                });
 
                 await _gameAssert.NotTooManyOpenGamesAsync();
 
@@ -87,12 +96,20 @@ namespace Api.Commands
                     throw new Exception("Since the game has been created an ID must be set");
                 }
 
+                await _repository.AddOrUpdatePlayerGameAsync(_playerIdentity.Id, Player.Game.From(_playerIdentity.Id, waitingRoom));
+
                 if (waitingRoom.MaxPlayers == waitingRoom.Players.Count)
                 {
                     var playerOrders = _uniqueRandomRangeCreator.CreateArrayWithAllNumbersFromRange(waitingRoom.Players.Count);
-                    var game = await _repository.StartGameAsync(waitingRoom.ID, playerOrders);
+                    var game = await _repository.StartGameAsync(waitingRoom.ID!, playerOrders);
+
                     if (game != null)
                     {
+                        foreach (var player in game.Players)
+                        {
+                            await _repository.AddOrUpdatePlayerGameAsync(player.ID, Player.Game.From(player.ID, game));
+                        }
+
                         await _gameHub.Clients.Users(waitingRoom.Players.Select(p => p.ID))
                             .SendAsync("GameStarted", game);
                         waitingRoom = game;
@@ -114,22 +131,21 @@ namespace Api.Commands
                     throw new ValidationException("Players cannot be greather than max number of players");
                 }
 
-                var game = new Game()
+                var game = _gameFactory.Create(request.GameType);
+                game.Status = GameStatus.WaitingForPlayers;
+                game.GameType = request.GameType; // add validation: check that value is part of enum values
+                game.MinPlayers = metadata.MinPlayers;
+                game.MaxPlayers = request.MaxPlayers ?? metadata.MaxPlayers;
+                game.MaxDuration = request.Duration ?? metadata.DefaultDuration;
+                game.IsOpen = request.IsOpen;
+                game.PlayersCount = 1;
+                game.Players = new List<Game.Player>()
                 {
-                    Status = GameStatus.WaitingForPlayers,
-                    GameType = request.GameType, // add validation: check that value is part of enum values
-                    MinPlayers = metadata.MinPlayers,
-                    MaxPlayers = request.MaxPlayers ?? metadata.MaxPlayers,
-                    IsOpen = request.IsOpen,
-                    PlayersCount = 1,
-                    Players = new List<Game.Player>()
+                    new Game.Player()
                     {
-                        new Game.Player()
-                        {
-                            ID = _playerIdentity.Id,
-                            Name = _playerIdentity.Name,
-                            AcceptedAt = DateTime.UtcNow
-                        }
+                        ID = _playerIdentity.Id,
+                        Name = _playerIdentity.Name,
+                        AcceptedAt = DateTime.UtcNow
                     }
                 };
                 return await _repository.CreateGameAsync(game);

@@ -21,9 +21,10 @@ namespace Api.Domain
 
         public async Task NotTooManyOpenGamesAsync()
         {
-            if ((await _repository.GetNumberOfGamesAsync(_playerIdentity.Id)) >= _gameOptions.Value.MaxNumberOfGamesPerUser)
+            var numberOfGames = await _repository.GetNumberOfGamesAsync(_playerIdentity.Id);
+            if (numberOfGames >= _gameOptions.Value.MaxNumberOfGamesPerUser)
             {
-                throw new ValidationException("Maximum number of games reached");
+                throw new ValidationException($"Maximum number of games reached: you already have {numberOfGames} games started while maximum is {_gameOptions.Value.MaxNumberOfGamesPerUser}");
             }
         }
     }

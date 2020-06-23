@@ -54,21 +54,21 @@ class AuthenticatedFetch {
         try {
             const response = await fetchCall;
             const status = response.status;
-            const result = await response.json();
+            let result = null;
+            try {
+                result = await response.json();
+            } catch {}
+
             if (status >= 200 && status < 300) {
                 return result;
-            } if (result.title && status >= 400 && status < 500) {
-                console.log('A client error occured while fetching');
+            } if (result?.title && status >= 400 && status < 500) {
+                console.log('A validation error occured');
                 console.log(result);
                 return errorHandler.validation(result.title);
-            } else if (status >= 500) {
+            } else {
                 console.log('A server error occured while fetching');
                 console.log(result);
                 return errorHandler.server();
-            } else {
-                console.log('An unknown result has been returned while fetching');
-                console.log(result);
-                return errorHandler.general(Error("Unknown fetch result"));
             }
         } catch (error) {
             console.log('A general error occured while fetching');

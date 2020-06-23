@@ -8,7 +8,8 @@
 - Antd, provides many UI components and easily usable with React (competes with MaterialUI)
 - Oidc client, OpenID connect/oAuth2 client
 - localForage, simple key/value store that offers promises and is built on top of IndexedDb, WebSQL, or localStorage
-
+- recoil, a fast new state management library written by Facebook, it is designed for React
+- use-share, a React hook to share data using share api if available (on mobile it is), else clipboard
 
 ## Available Scripts
 

@@ -4,6 +4,6 @@ namespace Api.Persistence
 {
     public interface ITicTacToeRepository
     {
-        Task<TicTacToeGame> SetTicTacToeStepAsync(string gameId, int stepIndex, bool value);
+        Task<TicTacToe> SetTicTacToeStepAsync(string? nextPlayerId, string gameId, int stepIndex, bool value, int stepNumber, GameStatus nextStatus);
     }
 }

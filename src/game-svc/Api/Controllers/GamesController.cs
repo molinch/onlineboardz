@@ -20,7 +20,7 @@ namespace Api.Controllers
             _mediator = mediator;
         }
 
-        [HttpGet]
+        [HttpGet("search")]
         public Task<IEnumerable<Game>> Get([FromQuery]IEnumerable<GameType> types, [FromQuery] IEnumerable<GameStatus> statuses)
         {
             return _mediator.Send(new ListPlayableGamesQuery(types, statuses));
@@ -30,6 +30,12 @@ namespace Api.Controllers
         public Task<IEnumerable<Player.Game>> GetMine()
         {
             return _mediator.Send(new ListMyGamesQuery());
+        }
+
+        [HttpGet("{gameId}")]
+        public Task<Game> Get(string gameId)
+        {
+            return _mediator.Send(new GetGameQuery(gameId));
         }
     }
 }

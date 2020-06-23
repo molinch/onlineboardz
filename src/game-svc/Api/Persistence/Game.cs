@@ -5,8 +5,8 @@ using System.Collections.Generic;
 
 namespace Api.Persistence
 {
-    [BsonDiscriminator(RootClass = true)]
-    [BsonKnownTypes(typeof(TicTacToeGame), typeof(MemoryGame))]
+    [BsonDiscriminator(Required = true)]
+    [BsonKnownTypes(typeof(TicTacToe), typeof(Memory))]
     public class Game: IEntity
     {
         [BsonId]

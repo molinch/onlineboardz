@@ -16,7 +16,9 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-i18next": "^11.5.0",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "recoil": "0.0.10",
+    "use-share": "^1.0.0"
   },
   "scripts": {
     "start": "react-app-rewired start",

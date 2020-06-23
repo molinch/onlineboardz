@@ -33,20 +33,6 @@ namespace ApiTests.Persistence
             return this;
         }
 
-        public Player.Game ToPlayerGame(Game game)
-        {
-            return new Player.Game()
-            {
-                ID = game.ID!,
-                Status = game.Status,
-                GameType = game.GameType,
-                IsOpen = game.IsOpen,
-                AcceptedAt = game.Players.Where(p => p.ID == _player.ID).Single().AcceptedAt,
-                StartedAt = game.StartedAt,
-                EndedAt = game.EndedAt,
-            };
-        }
-
         public PlayerBuilder Einstein => FromPlayerData(PlayerData.Einstein);
         public PlayerBuilder Eiffel => FromPlayerData(PlayerData.Eiffel);
 
@@ -62,7 +48,7 @@ namespace ApiTests.Persistence
 
         public PlayerBuilder AddGame(Game game)
         {
-            _player.Games.Add(ToPlayerGame(game));
+            _player.Games.Add(Player.Game.From(_player.ID, game));
             return this;
         }
 

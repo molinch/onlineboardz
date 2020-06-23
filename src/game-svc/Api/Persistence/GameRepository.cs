@@ -53,18 +53,18 @@ namespace Api.Persistence
             }
         }
 
-        public async Task AddOrUpdatePlayerGameAsync(Player player, Player.Game game)
+        public async Task AddOrUpdatePlayerGameAsync(string playerId, Player.Game game)
         {
             // First try to add it, if not there yet
             var updateResult = await _database.Update<Player>()
-                .Match(p => p.ID == player.ID && !p.Games.Any(g => g.ID == game.ID))
+                .Match(p => p.ID == playerId && !p.Games.Any(g => g.ID == game.ID))
                 .Modify(p => p.Push(g => g.Games, game))
                 .ExecuteAsync();
 
             if (updateResult.MatchedCount == 0) // game is already part of Games array, so we need to update it
             {
                 var update = _database.Update<Player>()
-                  .Match(p => p.ID == player.ID)
+                  .Match(p => p.ID == playerId)
                   .WithArrayFilter($"{{ 'x._id' : '{game.ID}' }}")
                   .Modify($"{{ $set : {{ 'Games.$[x].Status' : {(int)game.Status} }} }}");
 
@@ -97,9 +97,15 @@ namespace Api.Persistence
                 .ToListAsync();
         }
 
-        public async Task<Game?> GetAsync(string id)
+        public async Task<TGame?> GetAsync<TGame>(string id)
+            where TGame : Game
         {
-            return await _database.Find<Game>().OneAsync(id);
+            var game = await _database.Find<Game>().OneAsync(id);
+            if (!(game is TGame))
+            {
+                throw new InvalidOperationException($"Cannot cast game to a different type of game: game with '{id}' is a {game.GetType().Name} not a {typeof(TGame).Name}");
+            }
+            return (TGame)game;
         }
 
         public Task<int> GetNumberOfGamesAsync(string playerId)

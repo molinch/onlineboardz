@@ -31,7 +31,7 @@ namespace ApiTests.Persistence
         [Fact]
         public async Task Should_set_step()
         {
-            var game = new TicTacToeGameBuilder()
+            var game = new TicTacToeBuilder()
                 .Game(b => b
                     .TicTacToe
                     .WithPlayerEinstein
@@ -39,15 +39,16 @@ namespace ApiTests.Persistence
                     .RandomId)
                 .Build();
             var savedGame = await _gameRepository.CreateGameAsync(game);
+            var nextPlayerId = Guid.NewGuid().ToString();
 
             // Act
-            var updatedGamed = await _ticTacToeRepository.SetTicTacToeStepAsync(savedGame.ID!, 2, true);
+            var updatedGame = await _ticTacToeRepository.SetTicTacToeStepAsync(nextPlayerId, savedGame.ID!, 2, true, 3, GameStatus.InGame);
 
-            updatedGamed.Steps.Should().BeEquivalentTo(new bool?[]
+            updatedGame.Cells.Should().BeEquivalentTo(new TicTacToe.CellData?[]
             {
                 null,
                 null,
-                true,
+                new TicTacToe.CellData { Step = true, Number = 3 },
                 null,
                 null,
                 null,
@@ -55,6 +56,55 @@ namespace ApiTests.Persistence
                 null,
                 null
             }, options => options.WithStrictOrdering());
+            updatedGame.NextPlayerId.Should().Be(nextPlayerId);
+            updatedGame.Status.Should().Be(GameStatus.InGame);
+        }
+
+        [Fact]
+        public async Task Should_not_set_step_when_not_ingame()
+        {
+            var game = new TicTacToeBuilder()
+                .Game(b => b
+                    .TicTacToe
+                    .WithPlayerEinstein
+                    .WithPlayerEiffel
+                    .Finished
+                    .RandomId)
+                .Build();
+            var savedGame = await _gameRepository.CreateGameAsync(game);
+            var nextPlayerId = Guid.NewGuid().ToString();
+
+            // Act
+            await Assert.ThrowsAsync<UpdateException>(() => _ticTacToeRepository.SetTicTacToeStepAsync(nextPlayerId, savedGame.ID!, 2, true, 3, GameStatus.InGame));
+        }
+
+        [Fact]
+        public async Task Should_not_set_step_when_already_set()
+        {
+            var game = new TicTacToeBuilder()
+                .Game(b => b
+                    .TicTacToe
+                    .WithPlayerEinstein
+                    .WithPlayerEiffel
+                    .RandomId)
+                .Steps(new TicTacToe.CellData?[]
+                {
+                    null,
+                    null,
+                    new TicTacToe.CellData { Step = true, Number = 3 },
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                })
+                .Build();
+            var savedGame = await _gameRepository.CreateGameAsync(game);
+            var nextPlayerId = Guid.NewGuid().ToString();
+
+            // Act
+            await Assert.ThrowsAsync<UpdateException>(() => _ticTacToeRepository.SetTicTacToeStepAsync(nextPlayerId, savedGame.ID!, 2, true, 3, GameStatus.InGame));
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using IdentityModel;
+﻿using Api.Persistence;
+using IdentityModel;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
 using System.Security.Claims;
