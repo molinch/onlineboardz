@@ -10,7 +10,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Api.Commands
+namespace Api.Domain.Commands
 {
     public class AddTicTacToeStepCommand : IRequest<Game>
     {
@@ -62,24 +62,45 @@ namespace Api.Commands
                     throw new ValidationException("This cell has already a value");
                 }
 
-                var nextPlayerId = game.NextPlayerId ?? game.Players.First(p => p.PlayOrder == 0).ID;
-                if (nextPlayerId != _playerIdentity.Id)
+                var nextPlayer = game.NextPlayer;
+                if (nextPlayer.ID != _playerIdentity.Id)
                 {
-                    throw new ValidationException($"It is not your turn to play, current player is {nextPlayerId}");
+                    throw new ValidationException($"It is not your turn to play, current player is {nextPlayer.ID}");
                 }
 
-                int emptyCells = game.Cells.Where(g => g == null).Count();
+                var emptyCellsCount = game.EmptyCellsCount;
+                var stepNumber = TicTacToe.CellCount - emptyCellsCount;
+                game.Cells[request.CellIndex] = new TicTacToe.CellData() { Number = stepNumber };
+                var won = game.HasWon();
 
-                GameStatus newStatus = (emptyCells == 1) // this will complete the game
+                game.Status = won || (emptyCellsCount == 1) // this will complete the game
                     ? GameStatus.Finished
                     : GameStatus.InGame;
 
-                var player = game.Players.First(p => p.ID == _playerIdentity.Id);
-                var playerBoolean = player.PlayOrder == 0; // true is X, false is O
-                var nextPlayerOrder = (player.PlayOrder + 1) % game.PlayersCount;
-                var nextPlayer = game.Players.First(p => p.PlayOrder == nextPlayerOrder);
-                var stepNumber = TicTacToe.CellCount - emptyCells;
-                game = await _ticTacToeRepository.SetTicTacToeStepAsync(nextPlayer.ID, request.GameId, request.CellIndex, playerBoolean, stepNumber, newStatus);
+                if (game.Status != GameStatus.InGame)
+                {
+                    foreach (var player in game.Players)
+                    {
+                        bool isMe = player.ID == _playerIdentity.Id;
+                        player.Status = (won, isMe) switch {
+                            (true, true)  => player.Status = PlayerGameStatus.Won,
+                            (true, false) => player.Status = PlayerGameStatus.Lost,
+                            _ => PlayerGameStatus.Draw
+                        };
+                    }
+                }
+
+                await _ticTacToeRepository.SetTicTacToeStepAsync(game, request.CellIndex);
+
+                // remark: we should probably use a transaction as we update both Collections
+                if (game.Status != GameStatus.InGame)
+                {
+                    foreach (var player in game.Players)
+                    {
+                        // since game status changed we want to reflect that in Player collection
+                        await _gameRepository.AddOrUpdatePlayerGameAsync(player.ID, Player.Game.From(player.ID, game));
+                    }
+                }
 
                 await _gameHub.Clients.Users(game.Players.Select(p => p.ID))
                         .SendAsync("GameStepAdded", game);

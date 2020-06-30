@@ -3,8 +3,10 @@ The goal is to have fun and learn while making an online board games solution.
 
 
 Frontend: React
+
 Backends: .NET Core
-DB: document DBs, so NoSQL (except for identity provider which will use PostgreSQL)
+
+DB: NoSQL document DBs, (except for identity provider which will use PostgreSQL)
 
 Patterns: "microservices" in the sense that each services holds his domain
 - identity provider: sign in (with google, fb, twitter, ms), sign-out

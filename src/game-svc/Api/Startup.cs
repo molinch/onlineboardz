@@ -1,4 +1,3 @@
-using Api.Commands;
 using Api.Domain;
 using Api.Exceptions;
 using Api.Extensions;

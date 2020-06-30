@@ -1,19 +1,14 @@
-﻿using Api.Domain;
-using Api.Exceptions;
-using Api.Extensions;
+﻿using Api.Extensions;
 using Api.Persistence;
-using Api.SignalR;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Api.Commands
+namespace Api.Domain.Commands
 {
     public class JoinAnyGameCommand : IRequest<Game>
     {
@@ -36,20 +31,17 @@ namespace Api.Commands
             private readonly PlayerIdentity _playerIdentity;
             private readonly IGameRepository _repository;
             private readonly GameAssert _gameAssert;
-            private readonly IUniqueRandomRangeCreator _uniqueRandomRangeCreator;
             private readonly IGameFactory _gameFactory;
-            private readonly IHubContext<GameHub> _gameHub;
+            private readonly GameService _gameService;
 
             public AddPlayerToAnyGameCommandHander(PlayerIdentity playerIdentity, IGameRepository repository,
-                IHubContext<GameHub> gameHub, GameAssert gameAssert, IUniqueRandomRangeCreator uniqueRandomRangeCreator,
-                IGameFactory gameFactory)
+                GameAssert gameAssert, IGameFactory gameFactory, GameService gameService)
             {
                 _playerIdentity = playerIdentity;
                 _repository = repository;
-                _gameHub = gameHub;
                 _gameAssert = gameAssert;
-                _uniqueRandomRangeCreator = uniqueRandomRangeCreator;
                 _gameFactory = gameFactory;
+                _gameService = gameService;
             }
 
             public async Task<Game> Handle(JoinAnyGameCommand request, CancellationToken cancellationToken)
@@ -96,32 +88,7 @@ namespace Api.Commands
                     throw new Exception("Since the game has been created an ID must be set");
                 }
 
-                await _repository.AddOrUpdatePlayerGameAsync(_playerIdentity.Id, Player.Game.From(_playerIdentity.Id, waitingRoom));
-
-                if (waitingRoom.MaxPlayers == waitingRoom.Players.Count)
-                {
-                    var playerOrders = _uniqueRandomRangeCreator.CreateArrayWithAllNumbersFromRange(waitingRoom.Players.Count);
-                    var game = await _repository.StartGameAsync(waitingRoom.ID!, playerOrders);
-
-                    if (game != null)
-                    {
-                        foreach (var player in game.Players)
-                        {
-                            await _repository.AddOrUpdatePlayerGameAsync(player.ID, Player.Game.From(player.ID, game));
-                        }
-
-                        await _gameHub.Clients.Users(waitingRoom.Players.Select(p => p.ID))
-                            .SendAsync("GameStarted", game);
-                        waitingRoom = game;
-                    }
-                }
-                else
-                {
-                    await _gameHub.Clients.Users(waitingRoom.Players.Select(p => p.ID))
-                        .SendAsync("PlayerAdded", waitingRoom);
-                }
-
-                return waitingRoom;
+                return await _gameService.JoinAsync(waitingRoom);
             }
 
             private async Task<Game> CreateGameAsync(JoinAnyGameCommand request, GameTypeMetadata metadata)

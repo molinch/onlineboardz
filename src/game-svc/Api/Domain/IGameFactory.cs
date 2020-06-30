@@ -1,4 +1,4 @@
-﻿namespace Api.Persistence
+﻿namespace Api.Domain
 {
     public interface IGameFactory
     {

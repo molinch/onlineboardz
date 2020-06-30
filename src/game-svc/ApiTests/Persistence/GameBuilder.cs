@@ -1,4 +1,6 @@
-﻿using Api.Persistence;
+﻿using Api.Domain;
+using Api.Persistence;
+using AutoMapper;
 using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
@@ -17,18 +19,35 @@ namespace ApiTests.Persistence
         {
             ID = PlayerData.Einstein.ID,
             Name = PlayerData.Einstein.Name,
-            AcceptedAt = DateTime.UtcNow
+            AcceptedAt = DateTime.UtcNow,
+            PlayOrder = 0
         };
         public static readonly Game.Player Eiffel = new Game.Player()
         {
             ID = PlayerData.Eiffel.ID,
             Name = PlayerData.Eiffel.Name,
-            AcceptedAt = DateTime.UtcNow
+            AcceptedAt = DateTime.UtcNow,
+            PlayOrder = 1
         };
+        private readonly IMapper _mapper;
+
+        public GameBuilder()
+        {
+            _mapper = new MapperConfiguration(c =>
+                c.CreateMap<Game.Player, Game.Player>()).CreateMapper();
+        }
 
         private GameBuilder SetType(GameType gameType) { _game.GameType = gameType; return this; }
         private GameBuilder SetStatus(GameStatus status) { _game.Status = status; return this; }
-        private GameBuilder AddPlayer(Game.Player player) { _game.Players.Add(player); return this; }
+        private GameBuilder AddPlayer(Game.Player player, int? playOrder = null) {
+            if (playOrder != null)
+            {
+                player = _mapper.Map<Game.Player, Game.Player>(player); // make a copy since we alter it
+                player.PlayOrder = playOrder.Value;
+            }
+            _game.Players.Add(player);
+            return this;
+        }
 
         public GameBuilder TicTacToe => SetType(GameType.TicTacToe);
         public GameBuilder GooseGame => SetType(GameType.GooseGame);
@@ -38,8 +57,22 @@ namespace ApiTests.Persistence
         public GameBuilder TimedOut => SetStatus(GameStatus.TimedOut);
         public GameBuilder Finished => SetStatus(GameStatus.Finished);
 
-        public GameBuilder WithPlayerEinstein => AddPlayer(Einstein);
-        public GameBuilder WithPlayerEiffel => AddPlayer(Eiffel);
+        public GameBuilder FirstPlayerEinstein => AddPlayer(Einstein);
+        public GameBuilder SecondPlayerEiffel => AddPlayer(Eiffel);
+
+        public GameBuilder WithFirstPlayerEinstein(Action<Game.Player> withPlayer)
+        {
+            AddPlayer(Einstein);
+            withPlayer(_game.Players.Last());
+            return this;
+        }
+
+        public GameBuilder WithSecondPlayerEiffel(Action<Game.Player> withPlayer)
+        {
+            AddPlayer(Eiffel);
+            withPlayer(_game.Players.Last());
+            return this;
+        }
 
         public GameBuilder Open { get { _game.IsOpen = true; return this; } }
 

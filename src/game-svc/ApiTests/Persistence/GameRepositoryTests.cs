@@ -1,3 +1,4 @@
+using Api.Domain;
 using Api.Persistence;
 using FluentAssertions;
 using MongoDB.Driver;
@@ -13,7 +14,7 @@ namespace ApiTests.Persistence
     {
         private readonly GameRepository _repository;
 
-        public GameRepositoryTests()
+        public GameRepositoryTests(): base()
         {
             _repository = new GameRepository(
                 new DB(
@@ -29,7 +30,7 @@ namespace ApiTests.Persistence
                 .TicTacToe
                 .MinMaxPlayers(2, 4)
                 .Open
-                .WithPlayerEinstein;
+                .FirstPlayerEinstein;
 
             var game = builder.Build(); // need to get another one since mongodb will alter it (to add id for example)
 
@@ -47,19 +48,19 @@ namespace ApiTests.Persistence
         {
             var game1 = await _repository.CreateGameAsync(new GameBuilder()
                 .GooseGame
-                .WithPlayerEiffel
+                .SecondPlayerEiffel
                 .Build());
             var game2 = await _repository.CreateGameAsync(new GameBuilder()
                 .CardBattle
-                .WithPlayerEiffel
+                .SecondPlayerEiffel
                 .Build());
             var game3 = await _repository.CreateGameAsync(new GameBuilder()
                 .TimedOut // should not be picked since it's not waiting for players
-                .WithPlayerEiffel
+                .SecondPlayerEiffel
                 .Build());
             var game4 = await _repository.CreateGameAsync(new GameBuilder()
                 .CardBattle
-                .WithPlayerEinstein // should not be picked since Einstein is already in the game
+                .FirstPlayerEinstein // should not be picked since Einstein is already in the game
                 .Build());
 
             // Act
@@ -75,11 +76,11 @@ namespace ApiTests.Persistence
         public async Task Should_count_be_two_when_already_in_two_games()
         {
             var game1 = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .Build();
             await _repository.CreateGameAsync(game1);
             var game2 = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .Build();
             await _repository.CreateGameAsync(game2);
 
@@ -104,7 +105,7 @@ namespace ApiTests.Persistence
         public async Task Should_get_game_by_id()
         {
             var game = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .CardBattle
                 .Build();
             await _repository.CreateGameAsync(game);
@@ -128,7 +129,7 @@ namespace ApiTests.Persistence
         public async Task Should_remove_game()
         {
             var game = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .CardBattle
                 .Build();
             await _repository.CreateGameAsync(game);
@@ -145,7 +146,7 @@ namespace ApiTests.Persistence
         {
             var game = new GameBuilder()
                 .TicTacToe
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .Build();
             game = await _repository.CreateGameAsync(game);
 
@@ -166,7 +167,7 @@ namespace ApiTests.Persistence
         {
             var game = new GameBuilder()
                 .TicTacToe
-                .WithPlayerEiffel
+                .SecondPlayerEiffel
                 .Build();
             game = await _repository.CreateGameAsync(game);
 
@@ -181,7 +182,7 @@ namespace ApiTests.Persistence
         {
             var game = new GameBuilder()
                 .TicTacToe
-                .WithPlayerEiffel
+                .SecondPlayerEiffel
                 .Finished
                 .Build();
             game = await _repository.CreateGameAsync(game);
@@ -199,10 +200,11 @@ namespace ApiTests.Persistence
             game = await _repository.CreateGameAsync(game);
 
             // Act
-            game = await _repository.StartGameAsync(game.ID!, new int[0]);
+            var updatedGame = await _repository.StartGameAsync(game.ID!, new int[0]);
 
-            game.Should().NotBeNull();
-            game!.Status.Should().Be(GameStatus.InGame);
+            updatedGame.Should().NotBeNull();
+            updatedGame!.Status.Should().Be(GameStatus.InGame);
+            updatedGame.Version.Should().Be(game.Version + 1);
         }
 
         [Fact]
@@ -221,17 +223,18 @@ namespace ApiTests.Persistence
         public async Task Should_players_play_order_change()
         {
             var game = new GameBuilder()
-                .WithPlayerEiffel
-                .WithPlayerEinstein
+                .SecondPlayerEiffel
+                .FirstPlayerEinstein
                 .Build();
             game = await _repository.CreateGameAsync(game);
 
             // Act
-            game = await _repository.StartGameAsync(game.ID!, new[] { 1, 0 });
+            var updatedGame = await _repository.StartGameAsync(game.ID!, new[] { 1, 0 });
 
-            game.Should().NotBeNull();
-            game!.Players[0].PlayOrder.Should().Be(1);
-            game!.Players[1].PlayOrder.Should().Be(0);
+            updatedGame.Should().NotBeNull();
+            updatedGame!.Players[0].PlayOrder.Should().Be(1);
+            updatedGame.Players[1].PlayOrder.Should().Be(0);
+            updatedGame.Version.Should().Be(game.Version + 1);
         }
 
         [Fact]
@@ -239,7 +242,7 @@ namespace ApiTests.Persistence
         {
             var builder = new PlayerBuilder()
                 .Eiffel
-                .AddGame(b => b.WithPlayerEiffel);
+                .AddGame(b => b.SecondPlayerEiffel);
 
             var player = builder.Build(); // need to get another one since mongodb will alter it (to add id for example)
             var createdPlayer = await _repository.CreatePlayerIfNotThereAsync(builder); 
@@ -255,7 +258,7 @@ namespace ApiTests.Persistence
         {
             var builder = new PlayerBuilder()
                 .Eiffel
-                .AddGame(b => b.WithPlayerEiffel);
+                .AddGame(b => b.SecondPlayerEiffel);
 
             var createdPlayer = await _repository.CreatePlayerIfNotThereAsync(builder);
             var createdPlayer2 = await _repository.CreatePlayerIfNotThereAsync(builder);
@@ -269,12 +272,12 @@ namespace ApiTests.Persistence
         {
             var player1 = new PlayerBuilder()
                 .Eiffel
-                .AddGame(b => b.WithPlayerEiffel)
+                .AddGame(b => b.SecondPlayerEiffel)
                 .Build();
             await _repository.CreatePlayerIfNotThereAsync(player1);
             var player2 = new PlayerBuilder()
                 .Einstein
-                .AddGame(b => b.WithPlayerEinstein)
+                .AddGame(b => b.FirstPlayerEinstein)
                 .Build();
             await _repository.CreatePlayerIfNotThereAsync(player2);
 
@@ -288,7 +291,7 @@ namespace ApiTests.Persistence
         public async Task Should_not_add_player_to_game_if_already_in()
         {
             var game = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .CardBattle
                 .Build();
             await _repository.CreateGameAsync(game);
@@ -303,7 +306,7 @@ namespace ApiTests.Persistence
         public async Task Should_not_add_player_to_game_when_game_max_is_greather()
         {
             var game = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .CardBattle
                 .MinMaxPlayers(2, 4)
                 .Build();
@@ -319,7 +322,7 @@ namespace ApiTests.Persistence
         public async Task Should_not_add_player_to_game_when_game_duration_is_longer()
         {
             var game = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .CardBattle
                 .MaxDuration(10)
                 .Build();
@@ -335,7 +338,7 @@ namespace ApiTests.Persistence
         public async Task Should_not_add_player_to_game_when_game_type_is_different()
         {
             var game = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .TicTacToe
                 .Build();
             await _repository.CreateGameAsync(game);
@@ -350,7 +353,7 @@ namespace ApiTests.Persistence
         public async Task Should_not_add_player_to_game_when_status_is_not_waiting()
         {
             var game = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .CardBattle
                 .Finished
                 .Build();
@@ -366,7 +369,7 @@ namespace ApiTests.Persistence
         public async Task Should_add_player_to_game()
         {
             var game = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .CardBattle
                 .Build();
             await _repository.CreateGameAsync(game);
@@ -381,6 +384,7 @@ namespace ApiTests.Persistence
                 GameBuilder.Einstein,
                 GameBuilder.Eiffel
             }, options => options.WithMongoDateTime());
+            updatedGame.Version.Should().Be(game.Version + 1);
         }
 
         [Fact]
@@ -389,7 +393,7 @@ namespace ApiTests.Persistence
             var player = new PlayerBuilder()
                     .Einstein
                     .Build();
-            var game = Player.Game.From(player.ID, new GameBuilder().WithPlayerEinstein.RandomId);
+            var game = Player.Game.From(player.ID, new GameBuilder().FirstPlayerEinstein.RandomId);
 
             // Act
             await Assert.ThrowsAsync<UpdateException>(() => _repository.AddOrUpdatePlayerGameAsync(player.ID, game));
@@ -401,7 +405,7 @@ namespace ApiTests.Persistence
             var builder = new PlayerBuilder().Einstein;
             var player = builder.Build();
             await _repository.CreatePlayerIfNotThereAsync(player);
-            var game = Player.Game.From(player.ID, new GameBuilder().WithPlayerEinstein.CardBattle.RandomId);
+            var game = Player.Game.From(player.ID, new GameBuilder().FirstPlayerEinstein.CardBattle.RandomId);
 
             // Act
             await _repository.AddOrUpdatePlayerGameAsync(player.ID, game);
@@ -414,7 +418,7 @@ namespace ApiTests.Persistence
         public async Task Should_update_player_game_player_when_already_there()
         {
             var gameBuilder = new GameBuilder()
-                .WithPlayerEinstein
+                .FirstPlayerEinstein
                 .TicTacToe
                 .RandomId;
             var playerBuilder = new PlayerBuilder()

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Api.Persistence
+namespace Api.Domain
 {
     public class GameFactory : IGameFactory
     {

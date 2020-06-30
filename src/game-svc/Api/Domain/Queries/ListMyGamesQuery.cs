@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Api.Commands
+namespace Api.Domain.Queries
 {
     public class ListMyGamesQuery : IRequest<IEnumerable<Player.Game>>
     {

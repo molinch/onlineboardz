@@ -1,13 +1,11 @@
 ﻿using Api.Exceptions;
-using Api.Extensions;
 using Api.Persistence;
 using MediatR;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Api.Commands
+namespace Api.Domain.Queries
 {
     public class GetGameQuery : IRequest<Game>
     {

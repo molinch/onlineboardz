@@ -1,9 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using Api.Domain;
+using System.Threading.Tasks;
 
 namespace Api.Persistence
 {
     public interface ITicTacToeRepository
     {
-        Task<TicTacToe> SetTicTacToeStepAsync(string? nextPlayerId, string gameId, int stepIndex, bool value, int stepNumber, GameStatus nextStatus);
+        Task SetTicTacToeStepAsync(TicTacToe game, int cellIndex);
     }
 }

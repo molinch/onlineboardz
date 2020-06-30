@@ -3,7 +3,7 @@ using MongoDB.Entities.Core;
 using System;
 using System.Collections.Generic;
 
-namespace Api.Persistence
+namespace Api.Domain
 {
     [BsonDiscriminator(Required = true)]
     [BsonKnownTypes(typeof(TicTacToe), typeof(Memory))]
@@ -12,6 +12,7 @@ namespace Api.Persistence
         [BsonId]
         public string? ID { get; set; }
         public DateTime ModifiedOn { get; set; }
+        public int Version { get; set; }
 
         public GameStatus Status { get; set; }
 
@@ -45,6 +46,7 @@ namespace Api.Persistence
             public string Name { get; set; } = null!;
             public DateTime AcceptedAt { get; set; }
             public int PlayOrder { get; set; }
+            public PlayerGameStatus Status { get; set; }
         }
     }
 }

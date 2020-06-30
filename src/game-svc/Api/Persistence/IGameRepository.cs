@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Api.Domain;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Api.Persistence

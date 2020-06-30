@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Api.Persistence
+namespace Api.Domain
 {
     public enum GameType
     {

@@ -1,9 +1,7 @@
+using Api.Domain;
 using Api.Persistence;
 using FluentAssertions;
-using MongoDB.Driver;
 using MongoDB.Entities;
-using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -14,7 +12,7 @@ namespace ApiTests.Persistence
         private readonly GameRepository _gameRepository;
         private readonly TicTacToeRepository _ticTacToeRepository;
 
-        public TicTacToeRepositoryTests()
+        public TicTacToeRepositoryTests(): base()
         {
             _gameRepository = new GameRepository(
                 new DB(
@@ -34,30 +32,35 @@ namespace ApiTests.Persistence
             var game = new TicTacToeBuilder()
                 .Game(b => b
                     .TicTacToe
-                    .WithPlayerEinstein
-                    .WithPlayerEiffel
-                    .RandomId)
+                    .FirstPlayerEinstein
+                    .SecondPlayerEiffel
+                    .RandomId
+                    .InGame)
+                .TickCell(2)
                 .Build();
             var savedGame = await _gameRepository.CreateGameAsync(game);
-            var nextPlayerId = Guid.NewGuid().ToString();
 
             // Act
-            var updatedGame = await _ticTacToeRepository.SetTicTacToeStepAsync(nextPlayerId, savedGame.ID!, 2, true, 3, GameStatus.InGame);
+            await _ticTacToeRepository.SetTicTacToeStepAsync(game, 5);
+            var updatedGame = await _gameRepository.GetAsync<TicTacToe>(game.ID!);
 
-            updatedGame.Cells.Should().BeEquivalentTo(new TicTacToe.CellData?[]
+            updatedGame.Should().NotBeNull();
+            updatedGame!.Cells.Should().BeEquivalentTo(new TicTacToe.CellData?[]
             {
                 null,
                 null,
-                new TicTacToe.CellData { Step = true, Number = 3 },
+                new TicTacToe.CellData { Number = 0 },
                 null,
                 null,
-                null,
+                new TicTacToe.CellData { Number = 1 },
                 null,
                 null,
                 null
             }, options => options.WithStrictOrdering());
-            updatedGame.NextPlayerId.Should().Be(nextPlayerId);
+            updatedGame.NextPlayer.ID.Should().Be(GameBuilder.Einstein.ID);
             updatedGame.Status.Should().Be(GameStatus.InGame);
+            updatedGame.Version.Should().Be(game.Version + 1);
+            updatedGame.EndedAt.Should().BeNull();
         }
 
         [Fact]
@@ -66,16 +69,15 @@ namespace ApiTests.Persistence
             var game = new TicTacToeBuilder()
                 .Game(b => b
                     .TicTacToe
-                    .WithPlayerEinstein
-                    .WithPlayerEiffel
+                    .FirstPlayerEinstein
+                    .SecondPlayerEiffel
                     .Finished
                     .RandomId)
                 .Build();
             var savedGame = await _gameRepository.CreateGameAsync(game);
-            var nextPlayerId = Guid.NewGuid().ToString();
 
             // Act
-            await Assert.ThrowsAsync<UpdateException>(() => _ticTacToeRepository.SetTicTacToeStepAsync(nextPlayerId, savedGame.ID!, 2, true, 3, GameStatus.InGame));
+            await Assert.ThrowsAsync<UpdateException>(() => _ticTacToeRepository.SetTicTacToeStepAsync(savedGame, 1));
         }
 
         [Fact]
@@ -84,27 +86,44 @@ namespace ApiTests.Persistence
             var game = new TicTacToeBuilder()
                 .Game(b => b
                     .TicTacToe
-                    .WithPlayerEinstein
-                    .WithPlayerEiffel
-                    .RandomId)
-                .Steps(new TicTacToe.CellData?[]
-                {
-                    null,
-                    null,
-                    new TicTacToe.CellData { Step = true, Number = 3 },
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-                })
+                    .FirstPlayerEinstein
+                    .SecondPlayerEiffel
+                    .RandomId
+                    .InGame)
+                .TickCell(2)
                 .Build();
             var savedGame = await _gameRepository.CreateGameAsync(game);
-            var nextPlayerId = Guid.NewGuid().ToString();
 
             // Act
-            await Assert.ThrowsAsync<UpdateException>(() => _ticTacToeRepository.SetTicTacToeStepAsync(nextPlayerId, savedGame.ID!, 2, true, 3, GameStatus.InGame));
+            await Assert.ThrowsAsync<UpdateException>(() => _ticTacToeRepository.SetTicTacToeStepAsync(savedGame, 2));
+        }
+
+        [Fact]
+        public async Task Should_set_step_when_won()
+        {
+            var game = new TicTacToeBuilder()
+                .Game(b => b
+                    .TicTacToe
+                    .FirstPlayerEinstein
+                    .SecondPlayerEiffel
+                    .RandomId
+                    .InGame)
+                .Build();
+            var savedGame = await _gameRepository.CreateGameAsync(game);
+            savedGame.Status = GameStatus.Finished;
+            savedGame.Players[0].Status = PlayerGameStatus.Won;
+            savedGame.Players[1].Status = PlayerGameStatus.Lost;
+
+            // Act
+            await _ticTacToeRepository.SetTicTacToeStepAsync(game, 2); // with cell 2 we have the row [0, 1, 2]
+            var updatedGame = await _gameRepository.GetAsync<TicTacToe>(game.ID!);
+
+            updatedGame.Should().NotBeNull();
+            updatedGame!.Status.Should().Be(GameStatus.Finished);
+            updatedGame.Version.Should().Be(game.Version + 1);
+            updatedGame.EndedAt.Should().NotBeNull();
+            updatedGame.Players[0].Status.Should().Be(PlayerGameStatus.Won);
+            updatedGame.Players[1].Status.Should().Be(PlayerGameStatus.Lost);
         }
     }
 }
