@@ -134,7 +134,7 @@ namespace BoardIdentityServer
         {
             if (env.IsDevelopment())
             {
-                InitializeDatabase(app);
+                ResetDatabase(app);
                 app.UseDeveloperExceptionPage();
             }
             else
@@ -142,6 +142,8 @@ namespace BoardIdentityServer
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            InitializeDatabase(app);
 
             app
                 .UseHttpsRedirection()
@@ -153,6 +155,18 @@ namespace BoardIdentityServer
                 {
                     endpoints.MapControllers();
                 });
+        }
+
+        private void ResetDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            {
+                var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
+                context.Clients.RemoveRange(context.Clients.ToList());
+                context.IdentityResources.RemoveRange(context.IdentityResources.ToList());
+                context.ApiResources.RemoveRange(context.ApiResources.ToList());
+                context.SaveChanges();
+            }
         }
 
         private void InitializeDatabase(IApplicationBuilder app)
@@ -167,9 +181,8 @@ namespace BoardIdentityServer
 
                 var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
                 context.Database.Migrate();
-
-                context.Clients.RemoveRange(context.Clients.ToList());
                 context.SaveChanges();
+
                 if (!context.Clients.Any())
                 {
                     var clients = new List<Client>();
@@ -181,8 +194,6 @@ namespace BoardIdentityServer
                     context.SaveChanges();
                 }
 
-                context.IdentityResources.RemoveRange(context.IdentityResources.ToList());
-                context.SaveChanges();
                 if (!context.IdentityResources.Any())
                 {
                     foreach (var resource in new IdentityResource[]{
@@ -195,8 +206,6 @@ namespace BoardIdentityServer
                     context.SaveChanges();
                 }
 
-                context.ApiResources.RemoveRange(context.ApiResources.ToList());
-                context.SaveChanges();
                 if (!context.ApiResources.Any())
                 {
                     var resources = new List<ApiResource>();
