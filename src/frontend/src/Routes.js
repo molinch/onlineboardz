@@ -7,6 +7,7 @@ import LoginCallback from './login/LoginCallback';
 import LoginError from './login/LoginError';
 import TicTacToeGame from './games/TicTacToe/TicTacToe';
 import Play from './Play';
+import Profile from './Profile';
 
 const Routes = ({ user, fetchWithUi, authenticationStore, onLoggingError, gameNotificationClient, gameReachabilityChecker, setError }) => (
     <Router>
@@ -14,6 +15,12 @@ const Routes = ({ user, fetchWithUi, authenticationStore, onLoggingError, gameNo
         <About path="/about" />
         <Play
             path="/play"
+            user={user}
+            fetchWithUi={fetchWithUi}
+            setError={setError}
+        />
+        <Profile
+            path="/profile"
             user={user}
             fetchWithUi={fetchWithUi}
             setError={setError}

@@ -3,16 +3,14 @@ using Api.Extensions;
 using Api.Persistence;
 using Api.SignalR;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Api.Domain.Commands
 {
-    public class AddTicTacToeStepCommand : IRequest<Game>
+    public class AddTicTacToeStepCommand : IRequest<TicTacToe>
     {
         [JsonConstructor]
         public AddTicTacToeStepCommand(string gameId, int cellIndex)
@@ -24,14 +22,14 @@ namespace Api.Domain.Commands
         public string GameId { get; }
         public int CellIndex { get; }
 
-        public class AddTicTacToeStepCommandHandler : IRequestHandler<AddTicTacToeStepCommand, Game>
+        public class AddTicTacToeStepCommandHandler : IRequestHandler<AddTicTacToeStepCommand, TicTacToe>
         {
             private readonly PlayerIdentity _playerIdentity;
             private readonly IGameRepository _gameRepository;
             private readonly ITicTacToeRepository _ticTacToeRepository;
-            private readonly IHubContext<GameHub> _gameHub;
+            private readonly IGameHubSender _gameHub;
 
-            public AddTicTacToeStepCommandHandler(PlayerIdentity playerIdentity, IGameRepository gameRepository, ITicTacToeRepository ticTacToeRepository, IHubContext<GameHub> gameHub)
+            public AddTicTacToeStepCommandHandler(PlayerIdentity playerIdentity, IGameRepository gameRepository, ITicTacToeRepository ticTacToeRepository, IGameHubSender gameHub)
             {
                 _playerIdentity = playerIdentity;
                 _gameRepository = gameRepository;
@@ -39,7 +37,7 @@ namespace Api.Domain.Commands
                 _gameHub = gameHub;
             }
 
-            public async Task<Game> Handle(AddTicTacToeStepCommand request, CancellationToken cancellationToken)
+            public async Task<TicTacToe> Handle(AddTicTacToeStepCommand request, CancellationToken cancellationToken)
             {
                 var game = await _gameRepository.GetAsync<TicTacToe>(request.GameId);
                 if (game == null)
@@ -68,12 +66,10 @@ namespace Api.Domain.Commands
                     throw new ValidationException($"It is not your turn to play, current player is {nextPlayer.ID}");
                 }
 
-                var emptyCellsCount = game.EmptyCellsCount;
-                var stepNumber = TicTacToe.CellCount - emptyCellsCount;
-                game.Cells[request.CellIndex] = new TicTacToe.CellData() { Number = stepNumber };
+                game.Cells[request.CellIndex] = new TicTacToe.CellData() { Number = game.TickedCellsCount+1 };
                 var won = game.HasWon();
 
-                game.Status = won || (emptyCellsCount == 1) // this will complete the game
+                game.Status = won || game.AllCellsTicked
                     ? GameStatus.Finished
                     : GameStatus.InGame;
 
@@ -102,8 +98,7 @@ namespace Api.Domain.Commands
                     }
                 }
 
-                await _gameHub.Clients.Users(game.Players.Select(p => p.ID))
-                        .SendAsync("GameStepAdded", game);
+                await _gameHub.CustomAsync<TicTacToe, TransferObjects.TicTacToe>("GameStepAdded", game);
 
                 return game;
             }

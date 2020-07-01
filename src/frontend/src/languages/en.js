@@ -1,7 +1,7 @@
 const english = {
     "OnlineBoardz": "Online boardz",
     "OnlineBoardzLogo": "Online boardz logo",
-    "Footer": "Online boardz ©2020 to bunch of dawgz",
+    "Footer": "Online boardz ©2020 - Fabien Molinet",
     "YourAvatar": "Your avatar",
     "Home": "Home",
     "About": "About",
@@ -11,11 +11,12 @@ const english = {
     "Logout": "Logout",
     "LoggedIn": "Logged in!",
     "WelcomeUser": "Welcome {{userName}}",
-    "About-Desc": "Online boardz is a brilliant idea, why seeing your friends when you can just stay home? Furthermore it's Covid friendly.",
+    "About-Desc": "Online boardz is a brilliant idea, why seeing your friends when you can just stay home? Furthermore it's Covid friendly! (dark humor)",
     "Languages": "Languages",
     "PlayGame": "Play {{game}}",
     "SignIn": "Sign-in",
     "MyGames": "My games",
+    "ActiveGames": "Active games",
 
     "ChooseGame": "Choose a game",
     "TicTacToe": "Tic Tac Toe",
@@ -32,7 +33,6 @@ const english = {
     "CardBattle-Desc": "Win all cards in this classical game",
     "Scrabble": "Scrabble",
     "Scrabble-Desc": "Word game where words placed next to each other",
-    "TicTacToe_Won": "{{winner}} won",
     "TicTacToe_MovesHistory": "History of moves: ",
     "TicTacToe_NextPlayer": "Next player: {{player}}",
     "TicTacToe_BackToBeginning": "Back to beginning",
@@ -47,9 +47,21 @@ const english = {
     "GameOptionAtMostPlayersStart": "I want at most ",
     "GameOptionAtMostPlayersEnd": "players",
     "GameOptionIsOpen": "Game is open to anyone",
-    "GameOptionDuration": "Duration doesn't matter",
+    "GameOptionDuration": "Duration doesn't matter (default one will take place)",
     "GameOptionAtMostDurationStart": "Duration matters, maximum duration is ",
     "GameOptionAtMostDurationEnd": "minutes",
+    "Join": "Join",
+    "Favorite": "Favorite",
+
+    "GameStatus_0": "Waiting for players",
+    "GameStatus_1": "In game",
+    "GameStatus_2": "Cancelled: timed out",
+    "GameStatus_3": "Finished",
+
+    "PlayerGameStatus_0": "None",
+    "PlayerGameStatus_1": "Draw",
+    "PlayerGameStatus_2": "Won",
+    "PlayerGameStatus_3": "Lost",
 }
 
 export default english;

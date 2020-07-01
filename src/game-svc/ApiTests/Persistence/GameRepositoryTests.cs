@@ -287,6 +287,23 @@ namespace ApiTests.Persistence
             games.Should().BeEquivalentTo(player2.Games, options => options.WithMongoDateTime());
         }
 
+        public async Task Should_get_active_games_only_where_player_is_in()
+        {
+            var player2 = new PlayerBuilder()
+                .Einstein
+                .AddGame(b => b.FirstPlayerEinstein.InGame)
+                .AddGame(b => b.FirstPlayerEinstein.Finished)
+                .Build();
+            await _repository.CreatePlayerIfNotThereAsync(player2);
+
+            // Act
+            var games = await _repository.GetPlayerGamesAsync(PlayerData.Einstein.ID, GameStatus.InGame);
+
+            games.Should().BeEquivalentTo(
+                player2.Games.Where(g => g.Status == GameStatus.InGame),
+                options => options.WithMongoDateTime());
+        }
+
         [Fact]
         public async Task Should_not_add_player_to_game_if_already_in()
         {

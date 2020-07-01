@@ -11,9 +11,12 @@ namespace Api.Domain.Queries
     public class ListMyGamesQuery : IRequest<IEnumerable<Player.Game>>
     {
         [JsonConstructor]
-        public ListMyGamesQuery()
+        public ListMyGamesQuery(GameStatus? status)
         {
+            Status = status;
         }
+
+        public GameStatus? Status { get; }
 
         public class ListMyGamesQueryHandler : IRequestHandler<ListMyGamesQuery, IEnumerable<Player.Game>>
         {
@@ -28,7 +31,7 @@ namespace Api.Domain.Queries
 
             public async Task<IEnumerable<Player.Game>> Handle(ListMyGamesQuery request, CancellationToken cancellationToken)
             {
-                var games = await _repository.GetPlayerGamesAsync(_playerIdentity.Id);
+                var games = await _repository.GetPlayerGamesAsync(_playerIdentity.Id, request.Status);
                 return games;
             }
         }

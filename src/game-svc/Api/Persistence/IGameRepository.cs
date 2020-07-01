@@ -15,6 +15,7 @@ namespace Api.Persistence
         Task<int> GetNumberOfGamesAsync(string playerId);
         Task<IEnumerable<Game>> GetPlayableGamesAsync(string playerId, IEnumerable<GameType> gameTypes, IEnumerable<GameStatus> statuses);
         Task<IEnumerable<Player.Game>> GetPlayerGamesAsync(string playerId);
+        Task<IEnumerable<Player.Game>> GetPlayerGamesAsync(string playerId, GameStatus? status);
         Task RemoveAsync(string id);
         Task<Game?> StartGameAsync(string id, IReadOnlyList<int> playerOrders);
     }

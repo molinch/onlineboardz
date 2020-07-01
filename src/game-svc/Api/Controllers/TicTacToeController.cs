@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Api.Domain;
 using Api.Domain.Commands;
+using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,16 +14,19 @@ namespace Api.Controllers
     public class TicTacToeController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
 
-        public TicTacToeController(IMediator mediator)
+        public TicTacToeController(IMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
+            _mapper = mapper;
         }
 
         [HttpPatch]
-        public Task<Game> Update([Required][FromBody] AddTicTacToeStepCommand command)
+        public async Task<TransferObjects.TicTacToe> Update([Required][FromBody] AddTicTacToeStepCommand command)
         {
-            return _mediator.Send(command);
+            var game = await _mediator.Send(command);
+            return _mapper.Map<TransferObjects.TicTacToe>(game);
         }
     }
 }

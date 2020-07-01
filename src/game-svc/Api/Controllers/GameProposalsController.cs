@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Api.Domain;
 using Api.Domain.Commands;
+using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,28 +14,32 @@ namespace Api.Controllers
     public class GameProposalsController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
 
-        public GameProposalsController(IMediator mediator)
+        public GameProposalsController(IMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
+            _mapper = mapper;
         }
 
         /// <summary>
         /// Adds the current player to the specifig waiting room/game
         /// </summary>
         [HttpPatch("join")]
-        public Task<Game> Update([Required][FromBody] AddPlayerToSpecificGameCommand command)
+        public async Task<TransferObjects.Game> Update([Required][FromBody] AddPlayerToSpecificGameCommand command)
         {
-            return _mediator.Send(command);
+            var game = await _mediator.Send(command);
+            return _mapper.Map<TransferObjects.Game>(game);
         }
 
         /// <summary>
         /// Adds the current player to any waiting room/game that matches
         /// </summary>
         [HttpPatch("joinAny")]
-        public Task<Game> Update([Required][FromBody] JoinAnyGameCommand command)
+        public async Task<TransferObjects.Game> Update([Required][FromBody] JoinAnyGameCommand command)
         {
-            return _mediator.Send(command);
+            var game = await _mediator.Send(command);
+            return _mapper.Map<TransferObjects.Game>(game);
         }
     }
 }

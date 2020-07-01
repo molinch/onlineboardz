@@ -33,7 +33,7 @@ function App() {
     const [menuItems, setMenuItems] = useState(<></>);
     const [menuSelected, setMenuSelected] = useState("/home");
     const [error, setError] = useState(null);
-    const [myGames, setMyGames] = useState(null);
+    const [activeGames, setActiveGames] = useState(null);
     const { t } = useTranslation();
     const location = useLocation();
 
@@ -55,12 +55,12 @@ function App() {
             gameNotificationClient.load(user.access_token);
 
             (async () => {
-                const fetchedGames = await fetchWithUi.get(`${config.GameServiceUri}/games/mine`);
+                const fetchedGames = await fetchWithUi.get(`${config.GameServiceUri}/games/mine/active`);
                 if (fetchedGames.error) {
                     setError(fetchedGames.error);
                     return;
                 }
-                setMyGames(fetchedGames);
+                setActiveGames(fetchedGames);
             })();
         }
     ));
@@ -92,7 +92,7 @@ function App() {
             </SubMenu>
         );
         let accountMenu = (<></>);
-        let myGamesMenu = (<></>);
+        let activeGamesMenu = (<></>);
         if (user) {
             const img = (
                 <div>
@@ -111,10 +111,10 @@ function App() {
                 </SubMenu>
             );
 
-            if (myGames && myGames.length > 0) {
-                myGamesMenu = (
-                    <SubMenu key="mygames" title={t('MyGames')} inlineCollapsed={false}>
-                        {myGames.map(g => {
+            if (activeGames && activeGames.length > 0) {
+                activeGamesMenu = (
+                    <SubMenu key="active-games" title={t('ActiveGames')} inlineCollapsed={false}>
+                        {activeGames.map(g => {
                             const gameTypeInfo = GameTypeInfo.ById(g.gameType);
                             const uri = `/games/${gameTypeInfo.name}/${g.id}`;
                             return (
@@ -130,7 +130,7 @@ function App() {
 
         const menuItems = (
             <>
-                {myGamesMenu}
+                {activeGamesMenu}
                 <Menu.Item key="/home"><Link to="/">{t("Home")}</Link></Menu.Item>
                 <Menu.Item key="/about"><Link to="/about">{t("About")}</Link></Menu.Item>
                 <Menu.Item key="/play"><Link to="/play">{t("Play")}</Link></Menu.Item>
@@ -172,7 +172,7 @@ function App() {
             defaultSelectedKeys = ["/home"]
         }
         setMenuSelected(defaultSelectedKeys);
-    }, [pathName, logout, t, user, fetchWithUi, myGames]);
+    }, [pathName, logout, t, user, fetchWithUi, activeGames]);
 
     const onOpenChange = m => {
         setMenuSelected(m);
@@ -183,10 +183,10 @@ function App() {
             <Layout>
                 <Sider>
                     <Menu key="menu" theme="dark" mode="inline"
-                        defaultOpenKeys={['mygames']}
+                        defaultOpenKeys={['active-games']}
                         defaultSelectedKeys={['home']}
                         selectedKeys={menuSelected}
-                        openKeys={[...menuSelected, 'mygames']}
+                        openKeys={[...menuSelected, 'active-games']}
                         onOpenChange={onOpenChange}
                     >
                         {menuItems.props.children}

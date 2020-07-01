@@ -3,6 +3,7 @@ using Api.Exceptions;
 using Api.Extensions;
 using Api.Persistence;
 using Api.SignalR;
+using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -128,6 +129,7 @@ namespace Api
 
             services.AddSignalR();
             services.AddOptions<GameOptions>().Bind(_configuration.GetSection("Game"), options => options.BindNonPublicProperties = true);
+            services.AddAutoMapper(typeof(Startup));
 
             // Online boardz DI setup
             services.AddSingleton<PlayerIdentity>();
@@ -137,6 +139,8 @@ namespace Api
             services.AddSingleton<IGameRepository, GameRepository>();
             services.AddSingleton<ITicTacToeRepository, TicTacToeRepository>();
             services.AddSingleton<IGameFactory, GameFactory>();
+            services.AddSingleton<GameService>();
+            services.AddSingleton<IGameHubSender, GameHubSender>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

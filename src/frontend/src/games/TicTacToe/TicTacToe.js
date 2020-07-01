@@ -3,6 +3,8 @@ import './TicTacToe.css';
 import { useTranslation } from 'react-i18next';
 import Chat from '../Chat';
 import config from '../../config';
+import GameStatus from '../GameStatus';
+import PlayerGameStatus from '../PlayerGameStatus';
 
 const stepNameFromBool = (value) => {
     if (value === null) return '';
@@ -58,30 +60,27 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
         if (!user || !game) {
             return {
                 game: null,
-                player: null,
                 opponent: null,
                 currentPlayer: null,
                 history: [Array(9).fill(null)],
             };
         }
-        const player = game.players.find(p => p.id === user.id);
         const opponent = game.players.find(p => p.id !== user.id);
         const history = recomposeHistory(game);
         const currentPlayer = game.players.find(p => (history.length -1) % 2 ===  p.playOrder); // -1 since we have an initial zero item
         
         setGameData({
             game,
-            player,
             opponent,
             currentPlayer,
             history,
         });
-    }, [user, setError]);
+    }, [user]);
 
     const { t } = useTranslation();
     const [gameData, setGameData] = useState(processGame(passedGame));
     const [stepNumber, setStepNumber] = useState(null);
-    const {game, player, opponent, currentPlayer, history} = gameData || {};
+    const {game, opponent, currentPlayer, history} = gameData || {};
 
     const recomposeHistory = game => {
         let previousHistoryEntry = Array(9).fill(null);
@@ -89,7 +88,6 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
         history.push(previousHistoryEntry);
 
         if (game) {
-            debugger;
             game.cells
                 .map((cell, index) => {
                     if (!cell) return null;
@@ -97,7 +95,7 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
                     return {
                         nr: cell.number,
                         idx: index,
-                        step: cell.step
+                        step: cell.number % 2
                     }
                 })
                 .filter(cell => cell != null)
@@ -130,7 +128,6 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
                 processGame(game);
             }),
             gameNotificationClient.addHandler('GameStepAdded', game => {
-                debugger;
                 processGame(game);
             })
         ];
@@ -158,23 +155,37 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
         fetchGame();
     });
 
-    //const winner = game.winner;
     let status = t('Waiting for players...');
     let players = [];
     let movesHistory = null;
     if (game) {
-        players = game.players.map(p => p.name).join(", ");
-        if (game.status === 1) {
-            /*if (winner) {
-                status = t('TicTacToe_Won', { winner: `${currentPlayer.name} (${stepNameFromBool(winner)})`  });
-            } else {*/
+        players = game.players.map(p => {
+            let statusText = "";
+            switch (p.status) {
+                case PlayerGameStatus.Draw:
+                case PlayerGameStatus.Won:
+                case PlayerGameStatus.Lost:
+                    statusText = t(`PlayerGameStatus_${p.status}`);
+                    break;
+                default:
+                    statusText = "";
+                    break;
+            }
+            return `${p.name} ${statusText} (${stepNameFromPlayer(p)})`;
+        }).join(", ");
+        switch (game.status) {
+            case GameStatus.InGame:
                 status = t('TicTacToe_NextPlayer', { player: `${currentPlayer.name} (${stepNameFromPlayer(currentPlayer)})` });
-            //}
-        } else if (game.status >= 1) {
-            status = t('TicTacToe_GameEnded');
+                break;
+            case GameStatus.TimedOut:
+            case GameStatus.Finished:
+                status = t('TicTacToe_GameEnded');
+                break;
+            default:
+                break;
         }
 
-        if (game.status === 2) {
+        if (game.status === GameStatus.TimedOut || game.status === GameStatus.Finished) {
             const moves = history.map((step, stepNumber) => {
                 const desc = stepNumber ?
                     t('TicTacToe_BackToMoveNr') + stepNumber :
@@ -199,7 +210,6 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
             setError(response.error);
             return;
         }
-        debugger;
         processGame(response);
     }
 
@@ -207,7 +217,6 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
         if (!user || !game || game.status !== 1) return;
         if (currentPlayer.id !== user.id) return;
 
-        debugger;
         const current = history[history.length - 1];
         if (current[i]) {
             return;
@@ -226,7 +235,6 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
     };
 
     const current = stepNumber === null ? history[history.length-1] : history[stepNumber];
-    debugger;
     return (
         <div className="tictactoe">
             <div className="game-board">

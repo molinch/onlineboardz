@@ -1,8 +1,6 @@
 ﻿using Api.Extensions;
 using Api.Persistence;
 using Api.SignalR;
-using Microsoft.AspNetCore.SignalR;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Api.Domain
@@ -11,11 +9,11 @@ namespace Api.Domain
     {
         private readonly PlayerIdentity _playerIdentity;
         private readonly IGameRepository _repository;
-        private readonly IHubContext<GameHub> _gameHub;
+        private readonly IGameHubSender _gameHub;
         private readonly IUniqueRandomRangeCreator _uniqueRandomRangeCreator;
 
         public GameService(PlayerIdentity playerIdentity, IGameRepository repository,
-                IHubContext<GameHub> gameHub, IUniqueRandomRangeCreator uniqueRandomRangeCreator)
+                IGameHubSender gameHub, IUniqueRandomRangeCreator uniqueRandomRangeCreator)
         {
             _playerIdentity = playerIdentity;
             _repository = repository;
@@ -39,16 +37,14 @@ namespace Api.Domain
                         await _repository.AddOrUpdatePlayerGameAsync(player.ID, Player.Game.From(player.ID, game));
                     }
 
-                    await _gameHub.Clients.Users(game.Players.Select(p => p.ID))
-                        .SendAsync("GameStarted", game);
+                    await _gameHub.GameStartedAsync(game);
 
                     return game;
                 }
             }
             else
             {
-                await _gameHub.Clients.Users(passedGame.Players.Select(p => p.ID))
-                    .SendAsync("PlayerAdded", passedGame);
+                await _gameHub.PlayerAddedAsync(passedGame);
             }
 
             return passedGame;

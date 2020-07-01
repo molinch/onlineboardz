@@ -12,19 +12,32 @@ namespace Api.Persistence
     public class GameRepository : IGameRepository
     {
         private readonly DB _database;
+        private const int MaxItemsReturned = 50;
 
         public GameRepository(DB database)
         {
             _database = database;
         }
 
-        public async Task<IEnumerable<Player.Game>> GetPlayerGamesAsync(string playerId)
+        public Task<IEnumerable<Player.Game>> GetPlayerGamesAsync(string playerId)
         {
-            return await _database.Queryable<Player>()
+            return GetPlayerGamesAsync(playerId, null);
+        }
+
+        public async Task<IEnumerable<Player.Game>> GetPlayerGamesAsync(string playerId, GameStatus? status)
+        {
+            var query = _database.Queryable<Player>()
                 .Where(p => p.ID == playerId)
-                .SelectMany(p => p.Games)
+                .SelectMany(p => p.Games);
+
+            if (status != null)
+            {
+                query = query.Where(g => g.Status == status);
+            }
+
+            return await query
                 .OrderByDescending(p => p.AcceptedAt)
-                .Take(50)
+                .Take(MaxItemsReturned)
                 .ToListAsync();
         }
 
@@ -95,7 +108,7 @@ namespace Api.Persistence
             return await _database.Queryable<Game>()
                 .Where(g => g.Players.Any(p => p.ID != playerId))
                 .Where(g => gameTypes.Contains(g.GameType) && statuses.Contains(g.Status))
-                .Take(50)
+                .Take(MaxItemsReturned)
                 .ToListAsync();
         }
 

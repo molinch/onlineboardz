@@ -16,6 +16,9 @@ namespace Api.Domain
         public int EmptyCellsCount => Cells.Count(c => c == null);
 
         [Ignore]
+        public bool AllCellsTicked => EmptyCellsCount == 0;
+
+        [Ignore]
         public Player NextPlayer
         {
             get

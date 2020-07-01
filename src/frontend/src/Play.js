@@ -9,17 +9,17 @@ import { navigate } from "@reach/router";
 import config from './config';
 
 const { Meta } = Card;
-const ChooseGame = props =>
+const ChooseGame = ({onClick, t}) =>
     CardIcon(
-        (<SmileOutlined key="join" onClick={props.onClick} />),
-        (<SmileFilled key="join" onClick={props.onClick} />),
-        "icon-join", "Join"
+        (<SmileOutlined key="join" onClick={onClick} />),
+        (<SmileFilled key="join" onClick={onClick} />),
+        "icon-join", t("Join")
     );
-const Favorite = props =>
+const Favorite = ({onClick, t}) =>
     CardIcon(
-        (<HeartOutlined key="heart" onClick={props.onClick} />),
-        (<HeartFilled key="heart" onClick={props.onClick} />),
-        "icon-favorite", "Favorite"
+        (<HeartOutlined key="heart" onClick={onClick} />),
+        (<HeartFilled key="heart" onClick={onClick} />),
+        "icon-favorite", t("Favorite")
     );
 
 const defaultGameOptions = { hasMaxPlayers: false, maxPlayers: null, specificDuration: false, duration: null, isOpen: true };
@@ -191,8 +191,8 @@ const Play = ({ user, fetchWithUi, setError }) => {
                                 />
                             }
                             actions={[
-                                <ChooseGame onClick={() => onGameChosen(g, gameTypeInfo)} />,
-                                <Favorite onClick={() => onFavorite(gameTypeInfo)} />
+                                <ChooseGame onClick={() => onGameChosen(g, gameTypeInfo)} t={t} />,
+                                <Favorite onClick={() => onFavorite(gameTypeInfo)} t={t} />
                             ]}
                         >
                             <Meta
