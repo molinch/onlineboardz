@@ -2,7 +2,7 @@ FROM node:14.4.0-buster-slim AS base
 WORKDIR /app
 EXPOSE 443
 
-FROM node:14.4.0-buster AS build
+FROM node:14.4.0-buster-slim AS build
 WORKDIR /build
 COPY *.json ./
 COPY *.js ./

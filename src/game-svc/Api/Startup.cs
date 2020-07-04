@@ -187,7 +187,7 @@ namespace Api
 
         private void InitializeMongoDb(IApplicationBuilder app)
         {
-            var db = app.ApplicationServices.GetService<DB>();
+            var db = app.ApplicationServices.GetService<DB>()!;
             db.Index<Game>()
                 .Key(g => g.Status, KeyType.Ascending)
                 .Create();
