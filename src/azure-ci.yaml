@@ -6,6 +6,7 @@ trigger:
 
 variables:
   - group: Azure
+  - group: Boardz-KeyVault
   - name: vmImageName
     value: 'ubuntu-latest'
 
@@ -18,14 +19,13 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-    - task: AzureKeyVault@1
-      displayName: Get TSL certificate from key vault
+    - task: Bash@3
+      displayName: Write tls-cert keyvault certificate
       inputs:
-        azureSubscription: $(azureSubscriptionId)
-        keyVaultName: $(boardz-kv2)
-        secretsFilter: 'tls-cert'
-        runAsPreJob: false
-
+        targetType: 'inline'
+        script: echo $TLS_CERT > tls-cert
+      env:
+        TLS_CERT: $(tls-cert)
     - task: Docker@2
       displayName: Build and Push
       inputs:
