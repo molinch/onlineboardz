@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /app
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/nightly/sdk:5.0-buster AS build
+FROM mcr.microsoft.com/dotnet/nightly/sdk:5.0-buster-slim AS build
 WORKDIR /src
 COPY ["Api/Api.csproj", "Api/"]
 RUN dotnet restore "Api/Api.csproj"
