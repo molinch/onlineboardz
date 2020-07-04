@@ -23,7 +23,7 @@ stages:
       displayName: Write tls-cert keyvault certificate
       inputs:
         targetType: 'inline'
-        script: echo $TLS_CERT; echo $TLS_CERT > $BUILD/s/src/frontend/tls-cert
+        script: echo $TLS_CERT | base64 -d > $BUILD/s/src/frontend/tls-cert
       env:
         TLS_CERT: $(tls-cert)
         BUILD: $(Agent.BuildDirectory)
