@@ -23,9 +23,23 @@ stages:
       displayName: Write tls-cert keyvault certificate
       inputs:
         targetType: 'inline'
-        script: echo $TLS_CERT > tls-cert
+        script: echo $TLS_CERT > $BUILD/src/frontend/tls-cert
       env:
         TLS_CERT: $(tls-cert)
+        BUILD: $(Agent.BuildDirectory)
+
+    - task: Docker@2
+      displayName: Build and Push
+      inputs:
+        dockerfile: ./src/frontend/Dockerfile
+        buildContext: ./src/frontend
+        command: buildAndPush
+        repository: $(ContainerRegistry)/frontend
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(Build.BuildNumber)
+          latest
+
     - task: Docker@2
       displayName: Build and Push
       inputs:
@@ -45,18 +59,6 @@ stages:
         buildContext: ./src/identity-server
         command: buildAndPush
         repository: $(ContainerRegistry)/identity-server
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(Build.BuildNumber)
-          latest
-
-    - task: Docker@2
-      displayName: Build and Push
-      inputs:
-        dockerfile: ./src/frontend/Dockerfile
-        buildContext: ./src/frontend
-        command: buildAndPush
-        repository: $(ContainerRegistry)/frontend
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(Build.BuildNumber)
