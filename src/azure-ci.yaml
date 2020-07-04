@@ -23,6 +23,7 @@ stages:
       displayName: Build and Push
       inputs:
         dockerfile: ./src/game-svc/Api/Dockerfile
+        buildContext: ./src/game-svc
         command: buildAndPush
         repository: $(containerRegistry)/game-svc
         containerRegistry: $(dockerRegistryServiceConnection)
@@ -34,6 +35,7 @@ stages:
       displayName: Build and Push
       inputs:
         dockerfile: ./src/identity-server/BoardIdentityServer/Dockerfile
+        buildContext: ./src/identity-server
         command: buildAndPush
         repository: $(ContainerRegistry)/identity-server
         containerRegistry: $(dockerRegistryServiceConnection)
@@ -45,6 +47,7 @@ stages:
       displayName: Build and Push
       inputs:
         dockerfile: ./src/frontend/Dockerfile
+        buildContext: ./src/frontend
         command: buildAndPush
         repository: $(ContainerRegistry)/frontend
         containerRegistry: $(dockerRegistryServiceConnection)
