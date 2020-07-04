@@ -8,9 +8,11 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.FeatureManagement;
 using MongoDB.Driver;
 using MongoDB.Entities;
 using NSwag;
@@ -46,10 +48,10 @@ namespace Api
             }
 
             services.AddControllers()
-                    .AddJsonOptions(options =>
-                    {
-                        options.JsonSerializerOptions.IgnoreNullValues = true;
-                    });
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.IgnoreNullValues = true;
+                });
             services.AddAuthorization();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -120,16 +122,16 @@ namespace Api
             services.AddHttpContextAccessor();
             services.AddMediatR(typeof(Startup));
 
-            // to see if we really need to keep that dependency
-            // yet we don't use advance functionalities from it
+            var connectionString = _configuration["MongoConnectionString"].Replace("<MongoPassword>", _configuration["MongoPassword"]);
             services.AddMongoDBEntities(
-                MongoClientSettings.FromConnectionString(_configuration.GetValue<string>("MongoConnectionString")),
+                MongoClientSettings.FromConnectionString(connectionString),
                 _configuration.GetValue<string>("GameDatabaseName")
             );
 
             services.AddSignalR();
             services.AddOptions<GameOptions>().Bind(_configuration.GetSection("Game"), options => options.BindNonPublicProperties = true);
             services.AddAutoMapper(typeof(Startup));
+            services.AddFeatureManagement();
 
             // Online boardz DI setup
             services.AddSingleton<PlayerIdentity>();
@@ -149,11 +151,6 @@ namespace Api
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
             }
 
             app.UseHttpsRedirection();

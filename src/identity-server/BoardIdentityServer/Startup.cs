@@ -12,8 +12,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace BoardIdentityServer
 {
@@ -27,7 +29,7 @@ namespace BoardIdentityServer
 
         private IConfiguration Configuration { get; }
         private IWebHostEnvironment CurrentEnvironment { get; }
-        private string ConnectionString => Configuration.GetValue<string>("PostgreSQLConnectionString");
+        private string ConnectionString => Configuration["PostgresConnectionString"].Replace("PostgresPassword", Configuration["PostgresPassword"]);
 
         private string[] AllowedCorsOrigins => Configuration.GetSection("AllowedCorsOrigins").AsEnumerable()
                         .Select(p => p.Value)
@@ -84,13 +86,17 @@ namespace BoardIdentityServer
                     options.TokenCleanupInterval = 30;
                 });
 
-            if (CurrentEnvironment.IsDevelopment())
+            if (Configuration.IsUsingAzureAppConfiguration())
+            {
+                identityServerBuilder.AddSigningCredential(Configuration.GetSigningCertificate());
+            }
+            else if (CurrentEnvironment.IsDevelopment())
             {
                 identityServerBuilder.AddDeveloperSigningCredential();
             }
             else
             {
-                throw new System.Exception("missing signing certificate");
+                throw new Exception("Missing signing certificate");
                 // see: https://damienbod.com/2020/02/10/create-certificates-for-identityserver4-signing-using-net-core/
                 // see: https://tatvog.wordpress.com/2018/06/05/identityserver4-addsigningcredential-using-certificate-stored-in-azure-key-vault/
             }
@@ -137,16 +143,10 @@ namespace BoardIdentityServer
                 ResetDatabase(app);
                 app.UseDeveloperExceptionPage();
             }
-            else
-            {
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
 
             InitializeDatabase(app);
 
             app
-                .UseHttpsRedirection()
                 .UseCors()
                 .UseRouting()
                 .UseIdentityServer()
