@@ -4,49 +4,50 @@ trigger:
     - master
     - develop
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
   dockerRegistryServiceConnection: '1005146d-06b0-4566-9105-2a3f9d461171'
   containerRegistry: 'boardz.azurecr.io'
   tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest'
 
-- task: Docker@2
-  displayName: Login to ACR
-  inputs:
-    command: login
-    containerRegistry: '$(containerRegistry)'
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:  
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and Push
+      inputs:
+        dockerfile: ./src/game-svc/Api/Dockerfile
+        command: buildAndPush
+        repository: $(containerRegistry)/game-svc
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(Build.BuildNumber)
+          latest
 
-- task: Docker@2
-  displayName: Build and Push
-  inputs:
-    dockerfile: ./src/game-svc/Api/Dockerfile
-    command: buildAndPush
-    repository: $(containerRegistry)/game-svc
-    containerRegistry: $(dockerRegistryServiceConnection)
-    tags: |
-      $(Build.BuildNumber)
-      latest
+    - task: Docker@2
+      displayName: Build and Push
+      inputs:
+        dockerfile: ./src/identity-server/BoardIdentityServer/Dockerfile
+        command: buildAndPush
+        repository: $(ContainerRegistry)/identity-server
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(Build.BuildNumber)
+          latest
 
-- task: Docker@2
-  displayName: Build and Push
-  inputs:
-    dockerfile: ./src/identity-server/BoardIdentityServer/Dockerfile
-    command: buildAndPush
-    repository: $(ContainerRegistry)/identity-server
-    containerRegistry: $(dockerRegistryServiceConnection)
-    tags: |
-      $(Build.BuildNumber)
-      latest
-
-- task: Docker@2
-  displayName: Build and Push
-  inputs:
-    dockerfile: ./src/frontend/Dockerfile
-    command: buildAndPush
-    repository: $(ContainerRegistry)/frontend
-    containerRegistry: $(dockerRegistryServiceConnection)
-    tags: |
-      $(Build.BuildNumber)
-      latest
+    - task: Docker@2
+      displayName: Build and Push
+      inputs:
+        dockerfile: ./src/frontend/Dockerfile
+        command: buildAndPush
+        repository: $(ContainerRegistry)/frontend
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(Build.BuildNumber)
+          latest
