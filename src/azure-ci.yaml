@@ -8,21 +8,23 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-- name: ContainerRegistry
-  value: boardz
+  dockerRegistryServiceConnection: '1005146d-06b0-4566-9105-2a3f9d461171'
+  containerRegistry: 'boardz.azurecr.io'
+  tag: '$(Build.BuildId)'
 
 - task: Docker@2
   displayName: Login to ACR
   inputs:
     command: login
-    containerRegistry: '$(ContainerRegistry)'
+    containerRegistry: '$(containerRegistry)'
 
 - task: Docker@2
   displayName: Build and Push
   inputs:
     dockerfile: ./src/game-svc/Api/Dockerfile
     command: buildAndPush
-    repository: $(ContainerRegistry)/game-svc
+    repository: $(containerRegistry)/game-svc
+    containerRegistry: $(dockerRegistryServiceConnection)
     tags: |
       $(Build.BuildNumber)
       latest
@@ -33,6 +35,7 @@ variables:
     dockerfile: ./src/identity-server/BoardIdentityServer/Dockerfile
     command: buildAndPush
     repository: $(ContainerRegistry)/identity-server
+    containerRegistry: $(dockerRegistryServiceConnection)
     tags: |
       $(Build.BuildNumber)
       latest
@@ -43,6 +46,7 @@ variables:
     dockerfile: ./src/frontend/Dockerfile
     command: buildAndPush
     repository: $(ContainerRegistry)/frontend
+    containerRegistry: $(dockerRegistryServiceConnection)
     tags: |
       $(Build.BuildNumber)
       latest
