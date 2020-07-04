@@ -19,11 +19,12 @@ stages:
       vmImage: $(vmImageName)
     steps:
     - task: AzureKeyVault@1
-    inputs:
-      azureSubscription: $(azureSubscriptionId)
-      keyVaultName: $(boardz-kv2)
-      secretsFilter: 'tls-cert'
-      runAsPreJob: false
+      displayName: Get TSL certificate from key vault
+      inputs:
+        azureSubscription: $(azureSubscriptionId)
+        keyVaultName: $(boardz-kv2)
+        secretsFilter: 'tls-cert'
+        runAsPreJob: false
 
     - task: Docker@2
       displayName: Build and Push
