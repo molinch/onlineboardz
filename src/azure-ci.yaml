@@ -5,8 +5,9 @@ trigger:
     - develop
 
 variables:
-  vmImageName: 'ubuntu-latest'
   - group: Azure
+  - name: vmImageName
+    value: 'ubuntu-latest'
 
 stages:
 - stage: Build
