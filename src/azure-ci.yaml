@@ -34,7 +34,7 @@ stages:
         dockerfile: ./src/frontend/Dockerfile
         buildContext: ./src/frontend
         command: buildAndPush
-        repository: $(ContainerRegistry)/frontend
+        repository: frontend
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(Build.BuildNumber)
@@ -46,7 +46,7 @@ stages:
         dockerfile: ./src/game-svc/Api/Dockerfile
         buildContext: ./src/game-svc
         command: buildAndPush
-        repository: $(containerRegistry)/game-svc
+        repository: game-svc
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(Build.BuildNumber)
@@ -58,7 +58,7 @@ stages:
         dockerfile: ./src/identity-server/BoardIdentityServer/Dockerfile
         buildContext: ./src/identity-server
         command: buildAndPush
-        repository: $(ContainerRegistry)/identity-server
+        repository: identity-server
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(Build.BuildNumber)
