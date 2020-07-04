@@ -65,7 +65,7 @@ namespace BoardIdentityServer
             // had to add the check that returnUrl contains any cors origin
             // because when UI and API are not on the same host, the URL is not local
             // the condition here should be changed to either use configuration or just match domain
-            var baseUri = _configuration.GetValue<string>("BaseUri");
+            var baseUri = _configuration["IdentityServerBaseUri"];
             if (returnUrl.IsLocalUrl() || returnUrl.StartsWith(baseUri)) // to get from config
             {
                 var index = returnUrl.IndexOf('?');

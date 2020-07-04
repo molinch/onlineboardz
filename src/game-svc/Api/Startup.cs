@@ -8,7 +8,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,7 +35,7 @@ namespace Api
 
         private readonly bool _isDevelopment;
 
-        private string IdentityServerUri => _configuration.GetValue<string>("IdentityServerUri");
+        private string IdentityServerBaseUri => _configuration["IdentityServerBaseUri"];
 
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -56,7 +55,7 @@ namespace Api
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
-                options.Authority = IdentityServerUri;
+                options.Authority = IdentityServerBaseUri;
                 options.Audience = "game-api";
 
                 options.Events = new JwtBearerEvents
@@ -82,11 +81,7 @@ namespace Api
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    var allowedCorsOrigins = _configuration.GetSection("AllowedCorsOrigins").AsEnumerable()
-                        .Select(p => p.Value)
-                        .Where(v => v != null)
-                        .ToArray();
-                    policy.WithOrigins(allowedCorsOrigins)
+                    policy.WithOrigins(IdentityServerBaseUri, _configuration["FrontendBaseUri"], _configuration["GameServiceBaseUri"])
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
@@ -110,8 +105,8 @@ namespace Api
                                 { "profile", "Profile" },
                                 { "game-api", "Access game api" }
                             },
-                            AuthorizationUrl = $"{IdentityServerUri}connect/authorize",
-                            TokenUrl = $"{IdentityServerUri}connect/token",
+                            AuthorizationUrl = $"{IdentityServerBaseUri}connect/authorize",
+                            TokenUrl = $"{IdentityServerBaseUri}connect/token",
                         }
                     }
                 });
@@ -122,7 +117,7 @@ namespace Api
             services.AddHttpContextAccessor();
             services.AddMediatR(typeof(Startup));
 
-            var connectionString = _configuration["MongoConnectionString"].Replace("<MongoPassword>", _configuration["MongoPassword"]);
+            var connectionString = _configuration.GetSubstituted("MongoConnectionString");
             services.AddMongoDBEntities(
                 MongoClientSettings.FromConnectionString(connectionString),
                 _configuration.GetValue<string>("GameDatabaseName")

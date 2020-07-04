@@ -15,7 +15,6 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 
 namespace BoardIdentityServer
 {
@@ -23,18 +22,13 @@ namespace BoardIdentityServer
     {
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
-            Configuration = configuration;
-            CurrentEnvironment = env;
+            _configuration = configuration;
+            _currentEnvironment = env;
         }
 
-        private IConfiguration Configuration { get; }
-        private IWebHostEnvironment CurrentEnvironment { get; }
-        private string ConnectionString => Configuration["PostgresConnectionString"].Replace("PostgresPassword", Configuration["PostgresPassword"]);
-
-        private string[] AllowedCorsOrigins => Configuration.GetSection("AllowedCorsOrigins").AsEnumerable()
-                        .Select(p => p.Value)
-                        .Where(v => v != null)
-                        .ToArray();
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _currentEnvironment;
+        private string ConnectionString => _configuration.GetSubstituted("PostgresConnectionString");
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -42,7 +36,7 @@ namespace BoardIdentityServer
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins(AllowedCorsOrigins)
+                    policy.WithOrigins(_configuration["FrontendBaseUri"], _configuration["GameServiceBaseUri"])
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
@@ -63,9 +57,9 @@ namespace BoardIdentityServer
             var identityServerBuilder = services
                 .AddIdentityServer(options =>
                 {
-                    options.UserInteraction.LoginUrl = Configuration.GetValue<string>("UI:Login");
-                    options.UserInteraction.LogoutUrl = Configuration.GetValue<string>("UI:Logout");
-                    options.UserInteraction.ErrorUrl = Configuration.GetValue<string>("UI:Error");
+                    options.UserInteraction.LoginUrl = _configuration.GetSubstituted("UI:Login");
+                    options.UserInteraction.LogoutUrl = _configuration.GetSubstituted("UI:Logout");
+                    options.UserInteraction.ErrorUrl = _configuration.GetSubstituted("UI:Error");
                 })
                 // this adds the config data from DB (clients, resources)
                 .AddConfigurationStore(options =>
@@ -86,11 +80,11 @@ namespace BoardIdentityServer
                     options.TokenCleanupInterval = 30;
                 });
 
-            if (Configuration.IsUsingAzureAppConfiguration())
+            if (_configuration.IsUsingAzureAppConfiguration())
             {
-                identityServerBuilder.AddSigningCredential(Configuration.GetSigningCertificate());
+                identityServerBuilder.AddSigningCredential(_configuration.GetSigningCertificate());
             }
-            else if (CurrentEnvironment.IsDevelopment())
+            else if (_currentEnvironment.IsDevelopment())
             {
                 identityServerBuilder.AddDeveloperSigningCredential();
             }
@@ -111,7 +105,7 @@ namespace BoardIdentityServer
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.Scope.Add("profile");
 
-                    var googleAuthNSection = Configuration.GetSection("Authentication:Google");
+                    var googleAuthNSection = _configuration.GetSection("Authentication:Google");
                     options.ClientId = googleAuthNSection["ClientId"];
                     options.ClientSecret = googleAuthNSection["ClientSecret"];
 
@@ -123,7 +117,7 @@ namespace BoardIdentityServer
                 {
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
 
-                    var googleAuthNSection = Configuration.GetSection("Authentication:Facebook");
+                    var googleAuthNSection = _configuration.GetSection("Authentication:Facebook");
                     options.ClientId = googleAuthNSection["ClientId"];
                     options.ClientSecret = googleAuthNSection["ClientSecret"];
 
@@ -186,9 +180,12 @@ namespace BoardIdentityServer
                 if (!context.Clients.Any())
                 {
                     var clients = new List<Client>();
-                    Configuration.GetSection("IdentityServer:Clients").Bind(clients);
+                    _configuration.GetSection("IdentityServer:Clients").Bind(clients);
                     foreach (var client in clients)
                     {
+                        client.RedirectUris = client.RedirectUris.Select(uri => _configuration.ApplySubstitution(uri)).ToList();
+                        client.PostLogoutRedirectUris = client.PostLogoutRedirectUris.Select(uri => _configuration.ApplySubstitution(uri)).ToList();
+                        client.AllowedCorsOrigins = client.AllowedCorsOrigins.Select(uri => _configuration.ApplySubstitution(uri)).ToList();
                         context.Clients.Add(client.ToEntity());
                     }
                     context.SaveChanges();
@@ -209,7 +206,7 @@ namespace BoardIdentityServer
                 if (!context.ApiResources.Any())
                 {
                     var resources = new List<ApiResource>();
-                    Configuration.GetSection("IdentityServer:ApiResources").Bind(resources);
+                    _configuration.GetSection("IdentityServer:ApiResources").Bind(resources);
                     foreach (var resource in resources)
                     {
                         context.ApiResources.Add(resource.ToEntity());

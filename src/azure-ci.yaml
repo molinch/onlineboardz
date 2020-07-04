@@ -5,10 +5,8 @@ trigger:
     - develop
 
 variables:
-  dockerRegistryServiceConnection: '1005146d-06b0-4566-9105-2a3f9d461171'
-  containerRegistry: 'boardz.azurecr.io'
-  tag: '$(Build.BuildId)'
   vmImageName: 'ubuntu-latest'
+  - group: Azure
 
 stages:
 - stage: Build
@@ -19,6 +17,13 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
+    - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: $(azureSubscriptionId)
+      keyVaultName: $(boardz-kv2)
+      secretsFilter: 'tls-cert'
+      runAsPreJob: false
+
     - task: Docker@2
       displayName: Build and Push
       inputs:

@@ -359,3 +359,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 src/identity-server/IdentityServer/tempkey.rsa
+src/frontend/tls-cert
+src/frontend/boardz-out.crt
