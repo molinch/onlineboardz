@@ -57,6 +57,7 @@ namespace BoardIdentityServer
             var identityServerBuilder = services
                 .AddIdentityServer(options =>
                 {
+                    options.PublicOrigin = _configuration["IdentityServerBaseUri"];
                     options.UserInteraction.LoginUrl = _configuration.GetSubstituted("UI:Login");
                     options.UserInteraction.LogoutUrl = _configuration.GetSubstituted("UI:Logout");
                     options.UserInteraction.ErrorUrl = _configuration.GetSubstituted("UI:Error");
