@@ -46,11 +46,7 @@ namespace Api
                 Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
             }
 
-            services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.IgnoreNullValues = true;
-                });
+            services.AddControllers();
             services.AddAuthorization();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
