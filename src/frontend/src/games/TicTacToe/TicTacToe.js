@@ -158,7 +158,7 @@ const TicTacToe = ({gameId, user, fetchWithUi, passedGame, gameNotificationClien
     let status = t('Waiting for players...');
     let players = [];
     let movesHistory = null;
-    if (game) {
+    if (currentPlayer && game) {
         players = game.players.map(p => {
             let statusText = "";
             switch (p.status) {

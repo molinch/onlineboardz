@@ -5,7 +5,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-  name: boardz-ingress
+  name: boardz-frontend-ingress
 spec:
   tls:
     - hosts:
@@ -19,6 +19,27 @@ spec:
               serviceName: frontend
               servicePort: 3000
             path: /(.*)
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+    nginx.ingress.kubernetes.io/affinity: cookie # so an app holds connection to the same instance for WebSockets
+    nginx.ingress.kubernetes.io/proxy-read-timeout: 3600 # default is 60s which is too little for WebSockets
+    nginx.ingress.kubernetes.io/proxy-send-timeout: 3600 # default is 60s which is too little for WebSockets
+  name: boardz-game-svc-ingress
+spec:
+  tls:
+    - hosts:
+      - boardz.fabien-molinet.fr
+      secretName: boardz-tls
+  rules:
+    - host: boardz.fabien-molinet.fr
+      http:
+        paths:
           - backend:
               serviceName: game-svc
               servicePort: 5001

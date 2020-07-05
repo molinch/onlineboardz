@@ -20,7 +20,7 @@ metadata:
   labels:
     app: game-svc
 spec:
-  replicas: 2
+  replicas: 1 # at the moment use one, need to solve issues for SignalR/WS, see: https://pumpingco.de/blog/using-signalr-in-kubernetes-behind-nginx-ingress
   selector:
     matchLabels:
       app: game-svc
