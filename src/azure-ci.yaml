@@ -6,6 +6,7 @@ trigger:
 
 variables:
   - group: Azure
+  - group: Boardz-KeyVault
   - name: vmImageName
     value: 'ubuntu-latest'
 
@@ -18,12 +19,26 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-    - task: AzureKeyVault@1
-    inputs:
-      azureSubscription: $(azureSubscriptionId)
-      keyVaultName: $(boardz-kv2)
-      secretsFilter: 'tls-cert'
-      runAsPreJob: false
+    - task: Bash@3
+      displayName: Write tls-cert keyvault certificate
+      inputs:
+        targetType: 'inline'
+        script: echo $TLS_CERT | base64 -d > $BUILD/s/src/frontend/tls-cert
+      env:
+        TLS_CERT: $(tls-cert)
+        BUILD: $(Agent.BuildDirectory)
+
+    - task: Docker@2
+      displayName: Build and Push
+      inputs:
+        dockerfile: ./src/frontend/Dockerfile
+        buildContext: ./src/frontend
+        command: buildAndPush
+        repository: frontend
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(Build.BuildNumber)
+          latest
 
     - task: Docker@2
       displayName: Build and Push
@@ -31,7 +46,7 @@ stages:
         dockerfile: ./src/game-svc/Api/Dockerfile
         buildContext: ./src/game-svc
         command: buildAndPush
-        repository: $(containerRegistry)/game-svc
+        repository: game-svc
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(Build.BuildNumber)
@@ -43,19 +58,7 @@ stages:
         dockerfile: ./src/identity-server/BoardIdentityServer/Dockerfile
         buildContext: ./src/identity-server
         command: buildAndPush
-        repository: $(ContainerRegistry)/identity-server
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(Build.BuildNumber)
-          latest
-
-    - task: Docker@2
-      displayName: Build and Push
-      inputs:
-        dockerfile: ./src/frontend/Dockerfile
-        buildContext: ./src/frontend
-        command: buildAndPush
-        repository: $(ContainerRegistry)/frontend
+        repository: identity-server
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(Build.BuildNumber)
