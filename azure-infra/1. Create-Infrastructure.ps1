@@ -2,7 +2,7 @@
 
 $rg = New-AzResourceGroup -Name boardz-rg2 -Location westeurope
 $kv = New-AzKeyVault -VaultName boardz-kv2 -ResourceGroupName $rg.ResourceGroupName -Location $rg.Location -Sku Standard
-$tm = New-AzTrafficManagerProfile -Name boardz -ResourceGroupName $rg.ResourceGroupName -TrafficRoutingMethod Performance -RelativeDnsName boardz`
+$tm = New-AzTrafficManagerProfile -Name boardz-tm -ResourceGroupName $rg.ResourceGroupName -TrafficRoutingMethod Performance -RelativeDnsName boardz `
         -Ttl 30 -MonitorProtocol HTTPS -MonitorPort 443 -MonitorPath "/"
 
 # MANUALLY create keyvault policies for current user (me) to have all rights on the KV
@@ -17,14 +17,18 @@ az keyvault secret set --name aks-ssh-keys --vault-name $kv.VaultName --file aks
 # since it is free subscription, there is a limit of 4 vCores
 # however from Powershell setting MinNodeCount=1/MaxNodeCount=2 won't work it complains about that we need 6 vCores.
 # I don't get it as it should be 4 vCores... Anyway let's force it to 1 node, and change it later via UI
-$aks = New-AzAks -ResourceGroupName $rg.ResourceGroupName -Name boardz-aks2 -Location $rg.Location -LoadBalancerSku basic -SshKeyPath ./aks-ssh.pub -NodeCount 1 -NodeVmSetType VirtualMachineScaleSets
+$aks = New-AzAks -ResourceGroupName $rg.ResourceGroupName -Name boardz-aks -Location $rg.Location -LoadBalancerSku basic -SshKeyValue ./aks-ssh.pub -NodeCount 1 -NodeVmSetType VirtualMachineScaleSets
 # MANUALLY change AKS to autoscale with min node count = 1 and max node count = 2
 # attach AKS to ACR
 az aks update -n $aks.Name -g $rg.ResourceGroupName --attach-acr $acr.Name
+# get the virtual machine scale set that got created with AKS, we will need it later
+$vmss = Get-AzVMss -ResourceGroupName $rg.ResourceGroupName
+
 
 # These secrets will need to be set in Azure directly, we initiate them with a dummy value that will be changed MANUALLY throught Portal
 $dummySecret = ConvertTo-SecureString 'dummy' -AsPlainText -Force
-Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "MongoPassword" -SecretValue $dummySecret -Tag @{"target"="game-svc"}
+# MongoConnectionString will target a MongoDB Atlas instance which is free (also hosted in Azure but in a different subscription)
+Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "MongoConnectionString" -SecretValue $dummySecret -Tag @{"target"="game-svc"}
 Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "PostgresPassword" -SecretValue $dummySecret -Tag @{"target"="identity-server"}
 Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "Authentication-Google-ClientSecret" -SecretValue $dummySecret -Tag @{"target"="identity-server"}
 Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "Authentication-Google-ClientId" -SecretValue $dummySecret -Tag @{"target"="identity-server"}
@@ -43,8 +47,6 @@ foreach ($s in $secrets) { az appconfig kv set-keyvault -n $appConfig.Name --key
 $gameSvcIdentity = New-AzUserAssignedIdentity -ResourceGroupName $rg.ResourceGroupName -Name game-svc-mi
 $identityServerIdentity = New-AzUserAssignedIdentity -ResourceGroupName $rg.ResourceGroupName -Name identity-server-mi
 $identities = $gameSvcIdentity,$identityServerIdentity
-# get the virtual machine scale set that got created with AKS, VMSS is created in weird resource group, with a weird name, hence we must search for it
-$vmss = Get-AzVMss | where ResourceGroupName -like "*$($rg.ResourceGroupName)*" | select -first 1
 foreach ($id in $identities) {
     # allow them to operate on key vault
     az keyvault set-policy -n $kv.VaultName --spn $id.ClientId --secret-permissions get list --certificate-permissions get list
@@ -56,3 +58,5 @@ foreach ($id in $identities) {
     # assign the managed identities to the virtual machine scale set, so MIs will be on the VMs, and the VMs will receive requests from Pods
     az vmss identity assign -g $vmss.ResourceGroupName -n $vmss.Name --identities $id.Id
 }
+# apply the managed identities changes to the VM instances
+az vmss update-instances -g $vmss.ResourceGroupName -n $vmss.Name --instance-ids "*"
