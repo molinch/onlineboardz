@@ -20,7 +20,7 @@ metadata:
   labels:
     app: identity-server
 spec:
-  replicas: 2
+  replicas: 1 # keep it to one, there's an issue with IdentityServer4, it must keep some stuff in memory during signin
   selector:
     matchLabels:
       app: identity-server
