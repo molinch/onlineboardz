@@ -42,3 +42,8 @@ export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/nam
 echo "Visit http://127.0.0.1:8080 to use your application"
 kubectl port-forward $POD_NAME 8080:80
 #>
+
+# Finally manually create the postgres db/user using script src\identity-server\db\CreateDbAndUser.sql
+# Don't forget to change the password and the whole connection string should be placed in the Keyvault
+# It should look like:
+# Host=identity-server-pgsql-postgresql.default.svc.cluster.local; user id=identityserver-db-user; password=XXX; database=identityserver

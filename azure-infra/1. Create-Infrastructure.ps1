@@ -29,7 +29,9 @@ $vmss = Get-AzVMss -ResourceGroupName $rg.ResourceGroupName
 $dummySecret = ConvertTo-SecureString 'dummy' -AsPlainText -Force
 # MongoConnectionString will target a MongoDB Atlas instance which is free (also hosted in Azure but in a different subscription)
 Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "MongoConnectionString" -SecretValue $dummySecret -Tag @{"target"="game-svc"}
-Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "PostgresPassword" -SecretValue $dummySecret -Tag @{"target"="identity-server"}
+Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "PostgresConnectionString" -SecretValue $dummySecret -Tag @{"target"="identity-server"}
+Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "PostgresPassword" -SecretValue $dummySecret # no tag this is an admin password
+Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "PostgresPassword" -SecretValue $dummySecret # no tag this is an admin password
 Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "Authentication-Google-ClientSecret" -SecretValue $dummySecret -Tag @{"target"="identity-server"}
 Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "Authentication-Google-ClientId" -SecretValue $dummySecret -Tag @{"target"="identity-server"}
 Set-AzKeyVaultSecret -VaultName $kv.VaultName -Name "Authentication-Facebook-ClientSecret" -SecretValue $dummySecret -Tag @{"target"="identity-server"}
