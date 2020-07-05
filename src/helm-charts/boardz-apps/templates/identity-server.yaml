@@ -35,6 +35,3 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
-          env:
-            - name: PostgresConnectionString
-              value: "Host=localhost; user id=identityserver-db-user; password={PostgresPassword}; database=identityserver"
