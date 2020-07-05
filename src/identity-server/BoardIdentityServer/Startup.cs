@@ -105,9 +105,8 @@ namespace BoardIdentityServer
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.Scope.Add("profile");
 
-                    var googleAuthNSection = _configuration.GetSection("Authentication:Google");
-                    options.ClientId = googleAuthNSection["ClientId"];
-                    options.ClientSecret = googleAuthNSection["ClientSecret"];
+                    options.ClientId = _configuration["Authentication-Google-ClientId"];
+                    options.ClientSecret = _configuration["Authentication-Google-ClientSecret"];
 
                     options.ClaimActions.MapJsonKey("picture", "picture", "url");
                     options.ClaimActions.MapJsonKey("locale", "locale", "string");
@@ -117,9 +116,8 @@ namespace BoardIdentityServer
                 {
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
 
-                    var googleAuthNSection = _configuration.GetSection("Authentication:Facebook");
-                    options.ClientId = googleAuthNSection["ClientId"];
-                    options.ClientSecret = googleAuthNSection["ClientSecret"];
+                    options.ClientId = _configuration["Authentication-Facebook-ClientId"];
+                    options.ClientSecret = _configuration["Authentication-Facebook-ClientSecret"];
 
                     options.ClaimActions.MapJsonKey("picture", "picture", "url");
                     options.ClaimActions.MapJsonKey("locale", "locale", "string");
