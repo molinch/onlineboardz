@@ -1,7 +1,6 @@
 using Api.Domain;
 using Api.Persistence;
 using FluentAssertions;
-using MongoDB.Entities;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -14,16 +13,8 @@ namespace ApiTests.Persistence
 
         public TicTacToeRepositoryTests(): base()
         {
-            _gameRepository = new GameRepository(
-                new DB(
-                    _mongoClientSettings,
-                    _dbName
-                ));
-            _ticTacToeRepository = new TicTacToeRepository(
-                new DB(
-                    _mongoClientSettings,
-                    _dbName
-                ));
+            _gameRepository = new GameRepository(_database);
+            _ticTacToeRepository = new TicTacToeRepository(_database);
         }
 
         [Fact]
@@ -42,7 +33,7 @@ namespace ApiTests.Persistence
 
             // Act
             await _ticTacToeRepository.SetTicTacToeStepAsync(game, 5);
-            var updatedGame = await _gameRepository.GetAsync<TicTacToe>(game.ID!);
+            var updatedGame = await _gameRepository.GetAsync<TicTacToe>(game.Id!);
 
             updatedGame.Should().NotBeNull();
             updatedGame!.Cells.Should().BeEquivalentTo(new TicTacToe.CellData?[]
@@ -57,7 +48,7 @@ namespace ApiTests.Persistence
                 null,
                 null
             }, options => options.WithStrictOrdering());
-            updatedGame.NextPlayer.ID.Should().Be(GameBuilder.Einstein.ID);
+            updatedGame.NextPlayer.Id.Should().Be(GameBuilder.Einstein.Id);
             updatedGame.Status.Should().Be(GameStatus.InGame);
             updatedGame.Version.Should().Be(game.Version + 1);
             updatedGame.EndedAt.Should().BeNull();
@@ -116,7 +107,7 @@ namespace ApiTests.Persistence
 
             // Act
             await _ticTacToeRepository.SetTicTacToeStepAsync(game, 2); // with cell 2 we have the row [0, 1, 2]
-            var updatedGame = await _gameRepository.GetAsync<TicTacToe>(game.ID!);
+            var updatedGame = await _gameRepository.GetAsync<TicTacToe>(game.Id!);
 
             updatedGame.Should().NotBeNull();
             updatedGame!.Status.Should().Be(GameStatus.Finished);

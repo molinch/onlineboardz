@@ -28,13 +28,13 @@ namespace Api.Domain
             if (passedGame.MaxPlayers == passedGame.Players.Count)
             {
                 var playerOrders = _uniqueRandomRangeCreator.CreateArrayWithAllNumbersFromRange(passedGame.Players.Count);
-                var game = await _repository.StartGameAsync(passedGame.ID!, playerOrders);
+                var game = await _repository.StartGameAsync(passedGame.Id!, playerOrders);
 
                 if (game != null)
                 {
                     foreach (var player in game.Players)
                     {
-                        await _repository.AddOrUpdatePlayerGameAsync(player.ID, Player.Game.From(player.ID, game));
+                        await _repository.AddOrUpdatePlayerGameAsync(player.Id, Player.Game.From(player.Id, game));
                     }
 
                     await _gameHub.GameStartedAsync(game);

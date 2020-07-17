@@ -30,7 +30,7 @@ namespace ApiTests.Domain
             // Act
             var player = tictactoe.NextPlayer;
 
-            player.ID.Should().Be(GameBuilder.Einstein.ID);
+            player.Id.Should().Be(GameBuilder.Einstein.Id);
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace ApiTests.Domain
             // Act
             var player = tictactoe.NextPlayer;
 
-            player.ID.Should().Be(GameBuilder.Eiffel.ID);
+            player.Id.Should().Be(GameBuilder.Eiffel.Id);
         }
 
         [Theory]

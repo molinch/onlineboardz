@@ -51,12 +51,12 @@ namespace Api.Domain.Commands
                     throw new ValidationException("Invalid game type");
                 }
 
-                await _repository.CreatePlayerIfNotThereAsync(new Player()
+                var player = new Player()
                 {
-                    ID = _playerIdentity.Id,
+                    Id = _playerIdentity.Id,
                     Name = _playerIdentity.Name,
-                });
-
+                };
+                await _repository.CreatePlayerIfNotExistingAsync(player);
                 await _gameAssert.NotTooManyOpenGamesAsync();
 
                 Game? waitingRoom;
@@ -72,8 +72,8 @@ namespace Api.Domain.Commands
                         request.Duration,
                         new Game.Player()
                         {
-                            ID = _playerIdentity.Id,
-                            Name = _playerIdentity.Name,
+                            Id = player.Id,
+                            Name = player.Name,
                             AcceptedAt = DateTime.UtcNow
                         });
 
@@ -83,7 +83,7 @@ namespace Api.Domain.Commands
                     }
                 }
 
-                if (waitingRoom.ID == null)
+                if (waitingRoom.Id == null)
                 {
                     throw new Exception("Since the game has been created an ID must be set");
                 }
@@ -110,7 +110,7 @@ namespace Api.Domain.Commands
                 {
                     new Game.Player()
                     {
-                        ID = _playerIdentity.Id,
+                        Id = _playerIdentity.Id,
                         Name = _playerIdentity.Name,
                         AcceptedAt = DateTime.UtcNow
                     }

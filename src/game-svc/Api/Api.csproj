@@ -19,9 +19,12 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="3.0.2" />
     <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" Version="2.0.0" />
     <PackageReference Include="MongoDB.Driver" Version="2.10.4" />
-    <PackageReference Include="MongoDB.Entities" Version="13.2.1" />
     <PackageReference Include="NSwag.AspNetCore" Version="13.6.2" />
     <PackageReference Include="Scrutor" Version="3.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MongoDB.Thin\MongoDB.Thin.csproj" />
   </ItemGroup>
 
 

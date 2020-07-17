@@ -13,13 +13,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.FeatureManagement;
 using MongoDB.Driver;
-using MongoDB.Entities;
 using NSwag;
 using NSwag.AspNetCore;
 using NSwag.Generation.Processors.Security;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using MongoDB.Thin;
 
 namespace Api
 {
@@ -46,7 +47,12 @@ namespace Api
                 Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
             }
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    // at the moment always serialize nulls since there's a bug in .NET5 (it would omit serializing value types having default value)
+                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
+                });
             services.AddAuthorization();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -114,10 +120,7 @@ namespace Api
             services.AddMediatR(typeof(Startup));
 
             var connectionString = _configuration.GetSubstituted("MongoConnectionString");
-            services.AddMongoDBEntities(
-                MongoClientSettings.FromConnectionString(connectionString),
-                _configuration.GetValue<string>("GameDatabaseName")
-            );
+            services.AddMongo(connectionString, _configuration["GameDatabaseName"]);
 
             services.AddSignalR();
             services.AddOptions<GameOptions>().Bind(_configuration.GetSection("Game"), options => options.BindNonPublicProperties = true);
@@ -178,20 +181,15 @@ namespace Api
 
         private void InitializeMongoDb(IApplicationBuilder app)
         {
-            var db = app.ApplicationServices.GetService<DB>()!;
-            db.Index<Game>()
-                .Key(g => g.Status, KeyType.Ascending)
-                .Create();
-            db.Index<Game>()
-                .Key(g => g.GameType, KeyType.Ascending)
-                .Create();
-            db.Collection<Game>().Indexes.CreateOne(new CreateIndexModel<Game>(
-                new IndexKeysDefinitionBuilder<Game>().Ascending(new StringFieldDefinition<Game>("Players.ID"))
-            ));
+            var db = app.ApplicationServices.GetService<IMongoDatabase>()!;
 
-            db.Collection<Player>().Indexes.CreateOne(new CreateIndexModel<Player>(
-                new IndexKeysDefinitionBuilder<Player>().Ascending(new StringFieldDefinition<Player>("Games.ID"))
-            ));
+            db.Collection<Game>().Indexes
+                .Add(g => g.GameType)
+                .Add(g => g.Status)
+                .Add(g => g.Players, p => p.Id);
+
+            db.Collection<Player>().Indexes
+                .Add(p => p.Games, g => g.Id);
         }
     }
 }

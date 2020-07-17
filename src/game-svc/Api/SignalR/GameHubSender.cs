@@ -32,7 +32,7 @@ namespace Api.SignalR
             where TOut : TransferObjects.Game
         {
             var gameOut = _mapper.Map<TOut>(game);
-            return _gameHub.Clients.Users(game.Players.Select(p => p.ID))
+            return _gameHub.Clients.Users(game.Players.Select(p => p.Id))
                     .SendAsync(method, gameOut);
         }
     }

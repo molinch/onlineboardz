@@ -1,5 +1,5 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Entities.Core;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 
@@ -7,11 +7,11 @@ namespace Api.Domain
 {
     [BsonDiscriminator(Required = true)]
     [BsonKnownTypes(typeof(TicTacToe), typeof(Memory))]
-    public class Game: IEntity
+    public class Game
     {
         [BsonId]
-        public string? ID { get; set; }
-        public DateTime ModifiedOn { get; set; }
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? Id { get; set; }
         public int Version { get; set; }
 
         public GameStatus Status { get; set; }
@@ -42,7 +42,7 @@ namespace Api.Domain
         public class Player
         {
             [BsonId]
-            public string ID { get; set; } = null!;
+            public string Id { get; set; } = null!;
             public string Name { get; set; } = null!;
             public DateTime AcceptedAt { get; set; }
             public int PlayOrder { get; set; }

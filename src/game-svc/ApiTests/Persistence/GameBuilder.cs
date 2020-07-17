@@ -17,14 +17,14 @@ namespace ApiTests.Persistence
 
         public static readonly Game.Player Einstein = new Game.Player()
         {
-            ID = PlayerData.Einstein.ID,
+            Id = PlayerData.Einstein.ID,
             Name = PlayerData.Einstein.Name,
             AcceptedAt = DateTime.UtcNow,
             PlayOrder = 0
         };
         public static readonly Game.Player Eiffel = new Game.Player()
         {
-            ID = PlayerData.Eiffel.ID,
+            Id = PlayerData.Eiffel.ID,
             Name = PlayerData.Eiffel.Name,
             AcceptedAt = DateTime.UtcNow,
             PlayOrder = 1
@@ -80,7 +80,7 @@ namespace ApiTests.Persistence
         {
             get
             {
-                _game.ID = ObjectId.GenerateNewId().ToString();
+                _game.Id = ObjectId.GenerateNewId().ToString();
                 return this;
             }
         }
@@ -109,7 +109,7 @@ namespace ApiTests.Persistence
         {
             return new Game()
             {
-                ID = _game.ID,
+                Id = _game.Id,
                 GameType = _game.GameType,
                 Status = _game.Status,
                 MinPlayers = _game.MinPlayers,

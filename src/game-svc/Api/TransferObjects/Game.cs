@@ -6,7 +6,7 @@ namespace Api.TransferObjects
 {
     public class Game
     {
-        public string? ID { get; set; }
+        public string? Id { get; set; }
 
         public GameStatus Status { get; set; }
 

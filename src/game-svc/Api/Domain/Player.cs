@@ -1,16 +1,14 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Entities.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Api.Domain
 {
-    public class Player : IEntity
+    public class Player
     {
         [BsonId]
-        public string ID { get; set; } = null!;
-        public DateTime ModifiedOn { get; set; }
+        public string Id { get; set; } = null!;
 
         public string Name { get; set; } = null!;
 
@@ -24,18 +22,18 @@ namespace Api.Domain
             {
                 return new Game()
                 {
-                    ID = game.ID!,
+                    Id = game.Id!,
                     Status = game.Status,
                     GameType = game.GameType,
                     IsOpen = game.IsOpen,
-                    AcceptedAt = game.Players.Where(p => p.ID == playerId).Single().AcceptedAt,
+                    AcceptedAt = game.Players.Where(p => p.Id == playerId).Single().AcceptedAt,
                     StartedAt = game.StartedAt,
                     EndedAt = game.EndedAt,
                 };
             }
 
             [BsonId]
-            public string ID { get; set; } = null!;
+            public string Id { get; set; } = null!;
             public GameStatus Status { get; set; }
             public GameType GameType { get; set; }
             public bool IsOpen { get; set; }

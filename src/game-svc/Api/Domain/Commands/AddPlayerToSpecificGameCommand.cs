@@ -39,17 +39,17 @@ namespace Api.Domain.Commands
 
             public async Task<Game> Handle(AddPlayerToSpecificGameCommand request, CancellationToken cancellationToken)
             {
-                await _repository.CreatePlayerIfNotThereAsync(new Player()
+                await _repository.CreatePlayerIfNotExistingAsync(new Player()
                 {
-                    ID = _playerIdentity.Id,
+                    Id = _playerIdentity.Id,
                     Name = _playerIdentity.Name,
                 });
 
                 await _gameAssert.NotTooManyOpenGamesAsync();
 
-                var waitingRoom = await _repository.AddPlayerIfNotThereAsync(request.GameId, new Game.Player()
+                var waitingRoom = await _repository.AddPlayerToGameIfNotThereAsync(request.GameId, new Game.Player()
                 {
-                    ID = _playerIdentity.Id,
+                    Id = _playerIdentity.Id,
                     Name = _playerIdentity.Name,
                     AcceptedAt = DateTime.UtcNow
                 });
@@ -62,7 +62,7 @@ namespace Api.Domain.Commands
                         throw new ItemNotFoundException();
                     }
                     
-                    if (waitingRoom.Players.Any(p => p.ID == _playerIdentity.Id))
+                    if (waitingRoom.Players.Any(p => p.Id == _playerIdentity.Id))
                     {
                         throw new ValidationException("You are already in the game");
                     }

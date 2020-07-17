@@ -7,7 +7,7 @@ namespace Api.TransferObjects
 {
     public class Player
     {
-        public string ID { get; set; } = null!;
+        public string Id { get; set; } = null!;
 
         public string Name { get; set; } = null!;
 
@@ -19,11 +19,11 @@ namespace Api.TransferObjects
             {
                 return new Game()
                 {
-                    ID = game.ID!,
+                    ID = game.Id!,
                     Status = game.Status,
                     GameType = game.GameType,
                     IsOpen = game.IsOpen,
-                    AcceptedAt = game.Players.Where(p => p.ID == playerId).Single().AcceptedAt,
+                    AcceptedAt = game.Players.Where(p => p.Id == playerId).Single().AcceptedAt,
                     StartedAt = game.StartedAt,
                     EndedAt = game.EndedAt,
                 };

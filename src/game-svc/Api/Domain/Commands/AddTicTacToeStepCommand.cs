@@ -61,9 +61,9 @@ namespace Api.Domain.Commands
                 }
 
                 var nextPlayer = game.NextPlayer;
-                if (nextPlayer.ID != _playerIdentity.Id)
+                if (nextPlayer.Id != _playerIdentity.Id)
                 {
-                    throw new ValidationException($"It is not your turn to play, current player is {nextPlayer.ID}");
+                    throw new ValidationException($"It is not your turn to play, current player is {nextPlayer.Id}");
                 }
 
                 game.Cells[request.CellIndex] = new TicTacToe.CellData() { Number = game.TickedCellsCount+1 };
@@ -77,7 +77,7 @@ namespace Api.Domain.Commands
                 {
                     foreach (var player in game.Players)
                     {
-                        bool isMe = player.ID == _playerIdentity.Id;
+                        bool isMe = player.Id == _playerIdentity.Id;
                         player.Status = (won, isMe) switch {
                             (true, true)  => player.Status = PlayerGameStatus.Won,
                             (true, false) => player.Status = PlayerGameStatus.Lost,
@@ -94,7 +94,7 @@ namespace Api.Domain.Commands
                     foreach (var player in game.Players)
                     {
                         // since game status changed we want to reflect that in Player collection
-                        await _gameRepository.AddOrUpdatePlayerGameAsync(player.ID, Player.Game.From(player.ID, game));
+                        await _gameRepository.AddOrUpdatePlayerGameAsync(player.Id, Player.Game.From(player.Id, game));
                     }
                 }
 

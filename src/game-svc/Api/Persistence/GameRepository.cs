@@ -1,22 +1,24 @@
 ﻿using Api.Domain;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
-using MongoDB.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MongoDB.Thin;
 
 namespace Api.Persistence
 {
     public class GameRepository : IGameRepository
     {
-        private readonly DB _database;
+        private readonly IMongoCollection<Game> _games;
+        private readonly IMongoCollection<Player> _players;
         private const int MaxItemsReturned = 50;
 
-        public GameRepository(DB database)
+        public GameRepository(IMongoDatabase database)
         {
-            _database = database;
+            _games = database.Collection<Game>();
+            _players = database.Collection<Player>();
         }
 
         public Task<IEnumerable<Player.Game>> GetPlayerGamesAsync(string playerId)
@@ -26,8 +28,8 @@ namespace Api.Persistence
 
         public async Task<IEnumerable<Player.Game>> GetPlayerGamesAsync(string playerId, GameStatus? status)
         {
-            var query = _database.Queryable<Player>()
-                .Where(p => p.ID == playerId)
+            var query = _players.AsQueryable()
+                .Where(p => p.Id == playerId)
                 .SelectMany(p => p.Games);
 
             if (status != null)
@@ -41,15 +43,13 @@ namespace Api.Persistence
                 .ToListAsync();
         }
 
-        public async Task<Player?> CreatePlayerIfNotThereAsync(Player player)
+        public async Task<bool> CreatePlayerIfNotExistingAsync(Player player)
         {
-            var modifiedOn = DateTime.UtcNow;
-            var result = await _database.Collection<Player>()
+            var result = await _players
                 .UpdateOneAsync(
-                    p => p.ID == player.ID,
+                    p => p.Id == player.Id,
                     Builders<Player>.Update
-                        .SetOnInsert(p => p.ID, player.ID)
-                        .SetOnInsert(p => p.ModifiedOn, modifiedOn)
+                        .SetOnInsert(p => p.Id, player.Id)
                         .SetOnInsert(p => p.Name, player.Name)
                         .SetOnInsert(p => p.SchemaVersion, player.SchemaVersion)
                         .SetOnInsert(p => p.Games, (IEnumerable<Player.Game>)player.Games ?? Array.Empty<Player.Game>()),
@@ -58,43 +58,42 @@ namespace Api.Persistence
             if (result.MatchedCount == 0)
             {
                 if (result.UpsertedId == null) throw new InsertException();
-                player.ModifiedOn = modifiedOn;
-                return player;
+                return true;
             }
             else // already existing
             {
-                return null;
+                return false;
             }
         }
 
         public async Task AddOrUpdatePlayerGameAsync(string playerId, Player.Game game)
         {
             // First try to add it, if not there yet
-            var updateResult = await _database.Update<Player>()
-                .Match(p => p.ID == playerId && !p.Games.Any(g => g.ID == game.ID))
-                .Modify(p => p.Push(g => g.Games, game))
+            var updateResult = await _players.UpdateOne()
+                .Filter(b => b.Match(p => p.Id == playerId && !p.Games.Any(g => g.Id == game.Id)))
+                .Update(b => b.Modify(p => p.Push(g => g.Games, game)))
                 .ExecuteAsync();
 
             if (updateResult.MatchedCount == 0) // game is already part of Games array, so we need to update it
             {
-                var update = _database.Update<Player>()
-                  .Match(p => p.ID == playerId)
-                  .WithArrayFilter($"{{ 'x._id' : '{game.ID}' }}")
-                  .Modify($"{{ $set : {{ 'Games.$[x].Status' : {(int)game.Status} }} }}")
-                  .Modify($"{{ $set : {{ 'Games.$[x].PlayerGameStatus' : {(int)game.PlayerGameStatus} }} }}");
+                var command = _players.UpdateOne()
+                .Filter(b => b.Match(p => p.Id == playerId))
+                .Options(b => b.WithArrayFilter($"{{ 'x._id' : '{game.Id}' }}"))
+                .Update(b => b
+                    .Modify($"{{ $set : {{ 'Games.$[x].Status' : {(int)game.Status} }} }}")
+                    .Modify($"{{ $set : {{ 'Games.$[x].PlayerGameStatus' : {(int)game.PlayerGameStatus} }} }}"));
 
                 if (game.StartedAt.HasValue)
                 {
-                    update = update.Modify($"{{ $set : {{ 'Games.$[x].StartedAt' : '{game.StartedAt.Value.ToIso()}' }} }}");
+                    command = command.Update(b => b.Modify($"{{ $set : {{ 'Games.$[x].StartedAt' : '{game.StartedAt.Value.ToIso()}' }} }}"));
                 }
 
                 if (game.EndedAt.HasValue)
                 {
-                    update = update.Modify($"{{ $set : {{ 'Games.$[x].EndedAt' : '{game.EndedAt.Value.ToIso()}' }} }}");
+                    command = command.Update(b => b.Modify($"{{ $set : {{ 'Games.$[x].EndedAt' : '{game.EndedAt.Value.ToIso()}' }} }}"));
                 }
 
-                updateResult = await update
-                  .ExecuteAsync();
+                updateResult = await command.ExecuteAsync();
 
                 if (updateResult.MatchedCount == 0)
                 {
@@ -105,8 +104,8 @@ namespace Api.Persistence
 
         public async Task<IEnumerable<Game>> GetPlayableGamesAsync(string playerId, IEnumerable<GameType> gameTypes, IEnumerable<GameStatus> statuses)
         {
-            return await _database.Queryable<Game>()
-                .Where(g => g.Players.Any(p => p.ID != playerId))
+            return await _games.AsQueryable()
+                .Where(g => !g.Players.Any(p => p.Id == playerId))
                 .Where(g => gameTypes.Contains(g.GameType) && statuses.Contains(g.Status))
                 .Take(MaxItemsReturned)
                 .ToListAsync();
@@ -115,7 +114,7 @@ namespace Api.Persistence
         public async Task<TGame?> GetAsync<TGame>(string id)
             where TGame : Game
         {
-            var game = await _database.Find<Game>().OneAsync(id);
+            var game = await _games.FindOneAsync(g => g.Id == id);
             if (game != null && !(game is TGame))
             {
                 throw new InvalidOperationException($"Cannot cast game to a different type of game: game with '{id}' is a {game.GetType().Name} not a {typeof(TGame).Name}");
@@ -125,8 +124,8 @@ namespace Api.Persistence
 
         public Task<int> GetNumberOfGamesAsync(string playerId)
         {
-            return _database.Queryable<Game>()
-                .Where(g => g.Players.Any(p => p.ID == playerId))
+            return _games.AsQueryable()
+                .Where(g => g.Players.Any(p => p.Id == playerId))
                 .Where(g => g.Status == GameStatus.WaitingForPlayers || g.Status == GameStatus.InGame)
                 .CountAsync();
         }
@@ -134,43 +133,43 @@ namespace Api.Persistence
         public async Task<TGame> CreateGameAsync<TGame>(TGame game)
             where TGame : Game
         {
-            await _database.SaveAsync((Game)game);
+            await _games.InsertOneAsync(game);
             return game;
         }
 
-        public async Task<Game?> AddPlayerIfNotThereAsync(string id, Game.Player player)
+        public async Task<Game?> AddPlayerToGameIfNotThereAsync(string id, Game.Player player)
         {
-            var game = await _database.UpdateAndGet<Game>()
-                .Match(g => g.ID == id && !g.Players.Any(p => p.ID == player.ID) && g.Status == GameStatus.WaitingForPlayers)
-                .Modify(g => g.Push(g => g.Players, player))
-                .Modify(g => g.Inc(g => g.PlayersCount, 1))
-                .Modify(g => g.Inc(g => g.Version, 1))
+            return await _games.FindOneAndUpdate()
+                .Filter(b => b.Match(g => g.Id == id && !g.Players.Any(p => p.Id == player.Id) && g.Status == GameStatus.WaitingForPlayers))
+                .Update(b => b
+                    .Modify(g => g.Push(g => g.Players, player))
+                    .Modify(g => g.Inc(g => g.PlayersCount, 1))
+                    .Modify(g => g.Inc(g => g.Version, 1)))
                 .ExecuteAsync();
-            return game;
         }
 
         public async Task<Game?> AddPlayerToGameAsync(GameType gameType, int? maxPlayers, int? duration, Game.Player player)
         {
-            var update = _database.UpdateAndGet<Game>()
-                .Match(g =>
+            var command = _games.FindOneAndUpdate();
+            command.Filter(b => b.Match(g =>
                      g.GameType == gameType &&
-                     !g.Players.Any(p => p.ID == player.ID) &&
-                     g.Status == GameStatus.WaitingForPlayers);
+                     !g.Players.Any(p => p.Id == player.Id) &&
+                     g.Status == GameStatus.WaitingForPlayers));
 
             if (maxPlayers.HasValue)
             {
-                update = update.Match(g => g.MaxPlayers <= maxPlayers);
+                command = command.Filter(b => b.Match(g => g.MaxPlayers <= maxPlayers));
             }
 
             if (duration.HasValue)
             {
-                update = update.Match(g => g.MaxDuration <= duration);
+                command = command.Filter(b => b.Match(g => g.MaxDuration <= duration));
             }
 
-            var game = await update
+            var game = await command.Update(b => b
                 .Modify(g => g.Push(g => g.Players, player))
                 .Modify(g => g.Inc(g => g.PlayersCount, 1))
-                .Modify(g => g.Inc(g => g.Version, 1))
+                .Modify(g => g.Inc(g => g.Version, 1)))
                 .ExecuteAsync();
 
             return game;
@@ -178,23 +177,23 @@ namespace Api.Persistence
 
         public async Task<Game?> StartGameAsync(string id, IReadOnlyList<int> playerOrders)
         {
-            var update = _database.UpdateAndGet<Game>()
-                .Match(g => g.ID == id && g.Status == GameStatus.WaitingForPlayers)
-                .Modify(g => g.Status, GameStatus.InGame)
-                .Modify(g => g.StartedAt, DateTime.UtcNow)
-                .Modify(g => g.Inc(g => g.Version, 1));
+            var command = _games.FindOneAndUpdate()
+                .Filter(b => b.Match(g => g.Id == id && g.Status == GameStatus.WaitingForPlayers))
+                .Update(b => b
+                    .Modify(g => g.Status, GameStatus.InGame)
+                    .Modify(g => g.StartedAt, DateTime.UtcNow)
+                    .Modify(g => g.Inc(g => g.Version, 1)));
 
             for (var i = 0; i < playerOrders.Count; i++)
             {
                 var playOrder = playerOrders[i];
-                update = update.Modify($"{{ $set : {{ 'Players.{i}.PlayOrder' : {playOrder} }} }}");
+                command = command.Update(b => b.Modify($"{{ $set : {{ 'Players.{i}.PlayOrder' : {playOrder} }} }}"));
             }
 
-            return await update
-                .ExecuteAsync();
+            return await command.ExecuteAsync();
         }
 
         public async Task RemoveAsync(string id) =>
-            await _database.DeleteAsync<Game>(id);
+            await _games.DeleteOneAsync(g => g.Id == id);
     }
 }

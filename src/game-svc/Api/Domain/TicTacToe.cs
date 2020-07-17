@@ -1,4 +1,4 @@
-﻿using MongoDB.Entities;
+﻿using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Linq;
 
@@ -9,16 +9,16 @@ namespace Api.Domain
         public const byte CellCount = 9;
         public CellData?[] Cells { get; set; } = new CellData?[CellCount];
 
-        [Ignore]
+        [BsonIgnore]
         public int TickedCellsCount => CellCount - EmptyCellsCount;
 
-        [Ignore]
+        [BsonIgnore]
         public int EmptyCellsCount => Cells.Count(c => c == null);
 
-        [Ignore]
+        [BsonIgnore]
         public bool AllCellsTicked => EmptyCellsCount == 0;
 
-        [Ignore]
+        [BsonIgnore]
         public Player NextPlayer
         {
             get

@@ -28,7 +28,7 @@ namespace ApiTests.Persistence
 
         private PlayerBuilder FromPlayerData(PlayerData player)
         {
-            _player.ID = player.ID;
+            _player.Id = player.ID;
             _player.Name = player.Name;
             return this;
         }
@@ -48,7 +48,7 @@ namespace ApiTests.Persistence
 
         public PlayerBuilder AddGame(Game game)
         {
-            _player.Games.Add(Player.Game.From(_player.ID, game));
+            _player.Games.Add(Player.Game.From(_player.Id, game));
             return this;
         }
 
@@ -56,7 +56,7 @@ namespace ApiTests.Persistence
         {
             return new Player()
             {
-                ID = _player.ID,
+                Id = _player.Id,
                 Name = _player.Name,
                 Games = _player.Games.ToList()
             };

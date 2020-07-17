@@ -1,6 +1,7 @@
 ﻿using Api.Domain;
 using MongoDB.Bson;
-using MongoDB.Entities;
+using MongoDB.Driver;
+using MongoDB.Thin;
 using System;
 using System.Threading.Tasks;
 
@@ -8,37 +9,39 @@ namespace Api.Persistence
 {
     public class TicTacToeRepository : ITicTacToeRepository
     {
-        private readonly DB _database;
+        private readonly IMongoCollection<Game> _games;
 
-        public TicTacToeRepository(DB database) : base()
+        public TicTacToeRepository(IMongoDatabase database) : base()
         {
-            _database = database;
+            _games = database.Collection<Game>();
         }
 
         public async Task SetTicTacToeStepAsync(TicTacToe game, int cellIndex)
         {
             TicTacToe.CellData cell = game!.Cells[cellIndex]!;
 
-            var update = _database.Update<Game>()
-                .Match(g => g.ID == game.ID
+            var command = _games.UpdateOne()
+                .Filter(b => b
+                    .Match(g => g.Id == game.Id
                         && g.GameType == game.GameType
                         && g.Status == GameStatus.InGame
                         && g.Version == game.Version)
-                .Match($"{{ 'Cells.{cellIndex}': {{ $type: 10 }} }}") // $type 10 is null
-                .Modify($"{{ $set : {{ 'Cells.{cellIndex}' : {{ 'Number': {game.TickedCellsCount} }} }} }}")
-                .Modify(g => g.Inc(g => g.Version, 1));
+                    .Match($"{{ 'Cells.{cellIndex}': {{ $type: 10 }} }}")) // $type 10 is null
+                .Update(b => b
+                    .Modify($"{{ $set : {{ 'Cells.{cellIndex}' : {{ 'Number': {game.TickedCellsCount} }} }} }}")
+                    .Modify(g => g.Inc(g => g.Version, 1)));
 
             if (game.Status == GameStatus.Finished)
             {
                 var bsonPlayers = game.ToBsonDocument().GetElement("Players").Value.ToString();
-                update = update
-                    .Modify($"{{ $set : {{ 'Status' : {(int)game.Status} }} }}")
-                    .Modify($"{{ $set : {{ 'EndedAt' : '{DateTime.Now.ToIso()}' }} }}")
-                    .Modify($"{{ $set : {{ 'Players' : {bsonPlayers} }} }}");
+                command = command
+                    .Update(b => b
+                        .Modify($"{{ $set : {{ 'Status' : {(int)game.Status} }} }}")
+                        .Modify($"{{ $set : {{ 'EndedAt' : '{DateTime.Now.ToIso()}' }} }}")
+                        .Modify($"{{ $set : {{ 'Players' : {bsonPlayers} }} }}"));
             }
 
-            var updateResult = await update
-                 .ExecuteAsync();
+            var updateResult = await command.ExecuteAsync();
 
             if (updateResult.MatchedCount == 0 || updateResult.ModifiedCount == 0) throw new UpdateException();
         }
