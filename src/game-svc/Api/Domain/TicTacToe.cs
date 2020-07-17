@@ -1,6 +1,8 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using AutoMapper.Configuration.Annotations;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace Api.Domain
 {
@@ -18,6 +20,7 @@ namespace Api.Domain
         [BsonIgnore]
         public bool AllCellsTicked => EmptyCellsCount == 0;
 
+        [JsonIgnore]
         [BsonIgnore]
         public Player NextPlayer
         {

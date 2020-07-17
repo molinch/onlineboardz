@@ -8,8 +8,8 @@ namespace ApiTests.Persistence
 {
     public class TicTacToeRepositoryTests : RepositoryTests
     {
-        private readonly GameRepository _gameRepository;
-        private readonly TicTacToeRepository _ticTacToeRepository;
+        protected IGameRepository _gameRepository;
+        protected ITicTacToeRepository _ticTacToeRepository;
 
         public TicTacToeRepositoryTests(): base()
         {
@@ -106,7 +106,7 @@ namespace ApiTests.Persistence
             savedGame.Players[1].Status = PlayerGameStatus.Lost;
 
             // Act
-            await _ticTacToeRepository.SetTicTacToeStepAsync(game, 2); // with cell 2 we have the row [0, 1, 2]
+            await _ticTacToeRepository.SetTicTacToeStepAsync(savedGame, 2); // with cell 2 we have the row [0, 1, 2]
             var updatedGame = await _gameRepository.GetAsync<TicTacToe>(game.Id!);
 
             updatedGame.Should().NotBeNull();

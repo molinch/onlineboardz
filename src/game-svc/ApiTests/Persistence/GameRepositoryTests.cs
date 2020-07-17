@@ -12,7 +12,7 @@ namespace ApiTests.Persistence
 {
     public class GameRepositoryTests : RepositoryTests
     {
-        private readonly GameRepository _repository;
+        protected IGameRepository _repository;
 
         public GameRepositoryTests(): base()
         {
@@ -207,7 +207,7 @@ namespace ApiTests.Persistence
             var game = new GameBuilder().InGame.Build();
             game = await _repository.CreateGameAsync(game);
 
-            // Act: similate that we look for a waiting game, while in db it's already ingame
+            // Act: simulate that we look for a waiting game, while in db it's already ingame
             game = await _repository.StartGameAsync(game.Id!, new int[0]);
 
             game.Should().BeNull();
