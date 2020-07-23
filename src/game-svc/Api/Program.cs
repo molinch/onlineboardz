@@ -1,5 +1,6 @@
 using Azure.Core;
 using Azure.Identity;
+using ConfigurationSubstitution;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -37,6 +38,8 @@ namespace Api
                                 });
                         });
                     }
+
+                    builder.EnableSubstitutions();
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

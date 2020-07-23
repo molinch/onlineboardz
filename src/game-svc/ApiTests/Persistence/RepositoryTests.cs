@@ -1,4 +1,5 @@
 using Api;
+using ConfigurationSubstitution;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -20,13 +21,14 @@ namespace ApiTests.Persistence
             _configuration = new ConfigurationBuilder()
                 .AddUserSecrets(typeof(GameRepositoryTests).Assembly)
                 .AddJsonFile("appsettings.Development.json") // to do fix connection string with pwd
+                .EnableSubstitutions()
                 .Build();
 
             // The idea is that each test run gets his own fresh database (dropped during Dispose)
             // This way there is no state shared between the tests
             // Note: seems like Mongo has an inmemory feature that we could leverage too
             _dbName = "GameDbTest-" + Guid.NewGuid();
-            string connectionString = _configuration.GetSubstituted("MongoConnectionString");
+            string connectionString = _configuration["MongoConnectionString"];
             _mongoClientSettings = MongoClientSettings.FromConnectionString(connectionString);
             _mongoClientSettings.ClusterConfigurator = cb =>
             {

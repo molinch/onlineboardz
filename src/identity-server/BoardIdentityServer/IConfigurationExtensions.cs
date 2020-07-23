@@ -30,22 +30,5 @@ namespace BoardIdentityServer
             var pfxBytes = Convert.FromBase64String(configuration["tls-cert"]);
             return new X509Certificate2(pfxBytes);
         }
-
-        private static Regex FindSubstitutions = new Regex(@"(?<=\{)[^}{]*(?=\})", RegexOptions.Compiled);
-        public static string GetSubstituted(this IConfiguration configuration, string key)
-        {
-            var value = configuration[key];
-            return ApplySubstitution(configuration, value);
-        }
-
-        public static string ApplySubstitution(this IConfiguration configuration, string value)
-        {
-            var match = FindSubstitutions.Match(value);
-            foreach (var capture in match.Captures.Cast<Capture>())
-            {
-                value = value.Replace("{" + capture.Value + "}", configuration[capture.Value]);
-            }
-            return value;
-        }
     }
 }

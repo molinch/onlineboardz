@@ -119,7 +119,7 @@ namespace Api
             services.AddHttpContextAccessor();
             services.AddMediatR(typeof(Startup));
 
-            var connectionString = _configuration.GetSubstituted("MongoConnectionString");
+            var connectionString = _configuration["MongoConnectionString"];
             services.AddMongo(connectionString, _configuration["GameDatabaseName"]);
 
             services.AddSignalR();

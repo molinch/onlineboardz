@@ -28,7 +28,7 @@ namespace BoardIdentityServer
 
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _currentEnvironment;
-        private string ConnectionString => _configuration.GetSubstituted("PostgresConnectionString");
+        private string ConnectionString => _configuration["PostgresConnectionString"];
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -57,9 +57,9 @@ namespace BoardIdentityServer
             var identityServerBuilder = services
                 .AddIdentityServer(options =>
                 {
-                    options.UserInteraction.LoginUrl = _configuration.GetSubstituted("UI:Login");
-                    options.UserInteraction.LogoutUrl = _configuration.GetSubstituted("UI:Logout");
-                    options.UserInteraction.ErrorUrl = _configuration.GetSubstituted("UI:Error");
+                    options.UserInteraction.LoginUrl = _configuration["UI:Login"];
+                    options.UserInteraction.LogoutUrl = _configuration["UI:Logout"];
+                    options.UserInteraction.ErrorUrl = _configuration["UI:Error"];
                 })
                 // this adds the config data from DB (clients, resources)
                 .AddConfigurationStore(options =>
@@ -181,9 +181,6 @@ namespace BoardIdentityServer
                     _configuration.GetSection("IdentityServer:Clients").Bind(clients);
                     foreach (var client in clients)
                     {
-                        client.RedirectUris = client.RedirectUris.Select(uri => _configuration.ApplySubstitution(uri)).ToList();
-                        client.PostLogoutRedirectUris = client.PostLogoutRedirectUris.Select(uri => _configuration.ApplySubstitution(uri)).ToList();
-                        client.AllowedCorsOrigins = client.AllowedCorsOrigins.Select(uri => _configuration.ApplySubstitution(uri)).ToList();
                         context.Clients.Add(client.ToEntity());
                     }
                     context.SaveChanges();
